@@ -22,24 +22,29 @@ class Q_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Expanding,
             qtw.QSizePolicy.Fixed
         )
-        self.setFixedHeight(95)
-        self.setMinimumWidth(50)
 
         self.setLineWidth(2)
         self.setFrameStyle(qtw.QFrame.Panel | qtw.QFrame.Sunken)
 
-        layout_stack = qtw.QHBoxLayout()
+        layout_stack = qtw.QVBoxLayout()
         self.setLayout(layout_stack)
 
+        structure_top_strip = qtw.QWidget()
+        layout_top = qtw.QHBoxLayout()
+        structure_top_strip.setLayout(layout_top)
+        layout_stack.addWidget(structure_top_strip)
+
         self.widget_domain = qtw.QLineEdit(domain)
-        self.widget_domain.setFixedWidth(100)
+        self.widget_domain.setSizePolicy(
+            qtw.QSizePolicy.Maximum,
+            qtw.QSizePolicy.Minimum)
         self.widget_domain.textEdited.connect(
             lambda : self.widget_domain.setText(self.widget_domain.text().lower()))
         # This is a bit of a clunky way to force lower case, but it works without having to set a validator.
         # Maybe there's a potential use where a user needs to have passwords for both Google and google,
         # but I think it's more likely that having the option to mix and match, when a single letter capitalized
         # means a totally different hash, is just going to lead to potential headaches.
-        layout_stack.addWidget(self.widget_domain)
+        layout_top.addWidget(self.widget_domain)
 
         self.widget_gen_field = qtw.QLineEdit(
             self,
@@ -49,39 +54,40 @@ class Q_stack_widget(qtw.QFrame):
         self.widget_gen_field.mouseReleaseEvent = lambda _: self.force_highlight(self.widget_gen_field)
         layout_stack.addWidget(self.widget_gen_field) 
 
-        structure_phrase = qtw.QWidget()
-        structure_phrase.setFixedWidth(75)
-        layout_phrase = qtw.QVBoxLayout(structure_phrase)
+        # structure_empty_label = qtw.QSpacerItem(100000, 10,
+        #                                         qtw.QSizePolicy.Expanding,
+        #                                         qtw.QSizePolicy.Minimum)
+        structure_spacer = qtw.QSpacerItem(40, 20, qtw.QSizePolicy.Expanding, qtw.QSizePolicy.Minimum)
+        layout_top.addSpacerItem(structure_spacer)
+
         self.widget_phrase_toggle = qte.AnimatedToggle(
             pulse_checked_color="#00000000", # First two letters are alpha
             pulse_unchecked_color="#00000000"
             )
         self.widget_phrase_toggle.clicked.connect(self.phrase_clicked)
-        layout_phrase.addWidget(self.widget_phrase_toggle)
+        layout_top.addWidget(self.widget_phrase_toggle)
         self.widget_size_phrase = qtw.QSpinBox()
+        self.widget_size_phrase.setSizePolicy(
+            qtw.QSizePolicy.Maximum,
+            qtw.QSizePolicy.Minimum)
         self.widget_size_phrase.wheelEvent = lambda _: None 
         # I'm sure there are 4 or 5 people who use the mouse wheel to activate one of these. 
         # For everyone else, the mouse wheel is there to scroll the window, not screw with values.
         # There's nothing worse than trying to scroll the window and instead the mouse catches on a
         # value box for a moment and stops scrolling and starts adjusting the thing in the box instead.
-        layout_phrase.addWidget(self.widget_size_phrase)
-        layout_stack.addWidget(structure_phrase)
-        layout_phrase.widget
+        layout_top.addWidget(self.widget_size_phrase)
 
-        self.widget_gen_button = qtw.QPushButton('Gen')
-#        self.widget_gen_button.setSizePolicy(
-#            qtw.QSizePolicy.Fixed,
-#            qtw.QSizePolicy.Maximum)
-        self.widget_gen_button.setFixedSize(qtc.QSize(45, 75))
+
+        self.widget_gen_button = qtw.QPushButton('Generate')
         self.widget_gen_button.clicked.connect(self.generating_pass)
-        layout_stack.addWidget(self.widget_gen_button)
+        layout_top.addWidget(self.widget_gen_button)
 
         widget_del_button = qtw.QPushButton('-')
-        # widget_del_button.setFixedSize(qtc.QSize(30, 75))
-        widget_del_button.setFixedWidth(30)
-        widget_del_button.setFixedSize
+        widget_del_button.setSizePolicy(
+            qtw.QSizePolicy.Maximum,
+            qtw.QSizePolicy.Maximum)
         widget_del_button.clicked.connect(self.requesting_delete)
-        layout_stack.addWidget(widget_del_button)
+        layout_top.addWidget(widget_del_button)
 
 
         self.initialize_values()
@@ -123,7 +129,7 @@ class Q_stack_widget(qtw.QFrame):
         slider = self.widget_phrase_toggle
         spinbox = self.widget_size_phrase
         if slider.checkState() == 2: # Secure
-            spinbox.setMaximum(128)
+            spinbox.setMaximum(258)
             spinbox.setMinimum(20)
             spinbox.setValue(secure)
         if slider.checkState() == 0: # Passphrase

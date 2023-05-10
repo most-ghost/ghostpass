@@ -47,9 +47,19 @@ class logic(qtc.QObject):
         hashed = b64.b85encode(hexed).decode("utf-8")
         scrambled1 = hashed[::-1][::2]
         scrambled2 = hashed[:96:2]
-        scrambled = scrambled1 + scrambled2
+        
 
-        return(scrambled[0:size])
+        double_hexed = self.hex_gen(domain, password + password, salt + salt)
+        double_hashed = b64.b85encode(double_hexed).decode("utf-8")
+        extra_scrambly = scrambled1 + double_hashed[::-1] + scrambled2
+        # I added this step in later so it's a bit kludgy. I realized that I wanted to give
+        # the option to use a 256 bit ultra-long password if the user wants it. Is this the proper way 
+        # to do it? Maybe not, but it should still be 256 bits of random garbage so it 
+        # should be nearly impossible to brute force. The only concern is whether it's possible to find
+        # the master password using this pseudo 256-bit hash- I'm hoping that the password + salt 
+        # system will be enough to prevent those sorts of shenanigans. 
+
+        return(extra_scrambly[0:size])
 
 
     def pseudo_salt(self, ascii_password, potential_salt):

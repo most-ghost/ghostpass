@@ -9,6 +9,7 @@ import ghoststack
 
 import qtstyles as qts
 
+
 # This only contains stuff related to the main window and basic GUI drawing functions.
 # Any time you add a new stack to the main window, that stack is actually covered by ghoststack.py
 # The password generation stuff is in ghostlogic.py 
@@ -21,6 +22,12 @@ class main_window(qtw.QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        # font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+        # font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
+        # font = qtg.QFont(font_family)
+        # self.setFont(font)
+
 
         self.settings = qtc.QSettings('most_ghost', 'ghostpass')
 
@@ -81,14 +88,9 @@ class main_window(qtw.QMainWindow):
         self.widget_salt_edit.setPlaceholderText('Double Pass')
         self.widget_salt_edit.on_toggle_password_Action()
         layout_pass.addWidget(self.widget_salt_edit, 1)
-        widget_gen_all = qtw.QPushButton('Gen All')
+        widget_gen_all = qtw.QPushButton('Generate All')
         widget_gen_all.clicked.connect(self.generate_all)
         layout_pass.addWidget(widget_gen_all, 1)
-
-        ### TEST
-        widget_picker = qts.StylePickerWidget()
-        layout_pass.addWidget(widget_picker)
-        ### TEST
 
         structure_scroll_area = qtw.QScrollArea()
         structure_scroll_widget = qtw.QWidget()
@@ -271,15 +273,21 @@ class main_window(qtw.QMainWindow):
     # We're overwriting Qt's own 'close' function, just so that we can tack on one last settings update.
     # Just to make extra sure we're up to date.
     
-
-print(qts.StylePicker().available_styles)
-
+    
 
 if __name__ == '__main__': 
     app = qtw.QApplication(sys.argv)
+
+    # Move this up into the main window code rather than just universally applying the font to the whole thing.
+    font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+    font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
+    font = qtg.QFont(font_family)
+    font.setPointSize(15)
+    app.setFont(font)
+
 #    app.setStyle('Fusion')
     styles = qtw.QStyleFactory.keys()
-    app.setStyleSheet(qts.StylePicker("qdark").get_sheet())
+    app.setStyleSheet(qts.StylePicker("breeze-dark").get_sheet())
     mw = main_window()
     sys.exit(app.exec())
 
