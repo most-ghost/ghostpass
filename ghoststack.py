@@ -15,6 +15,14 @@ class Q_stack_widget(qtw.QFrame):
         super().__init__()
         self.settings = settings
 
+        font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+        font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
+        font_typewriter = qtg.QFont(font_family)
+        font_typewriter.setPointSize(15)
+
+        font_typewriter_small = qtg.QFont(font_family)
+        font_typewriter.setPointSize(15)
+
         self.pass_widget = pass_widget
         self.salt_widget = salt_widget
 
@@ -30,6 +38,9 @@ class Q_stack_widget(qtw.QFrame):
         self.setLayout(layout_stack)
 
         structure_top_strip = qtw.QWidget()
+        structure_top_strip.setSizePolicy(
+            qtw.QSizePolicy.Preferred,
+            qtw.QSizePolicy.Fixed)
         layout_top = qtw.QHBoxLayout()
         structure_top_strip.setLayout(layout_top)
         layout_stack.addWidget(structure_top_strip)
@@ -44,6 +55,7 @@ class Q_stack_widget(qtw.QFrame):
         # Maybe there's a potential use where a user needs to have passwords for both Google and google,
         # but I think it's more likely that having the option to mix and match, when a single letter capitalized
         # means a totally different hash, is just going to lead to potential headaches.
+        self.widget_domain.setFont(font_typewriter)
         layout_top.addWidget(self.widget_domain)
 
         self.widget_gen_field = qtw.QLineEdit(
@@ -60,26 +72,46 @@ class Q_stack_widget(qtw.QFrame):
         structure_spacer = qtw.QSpacerItem(40, 20, qtw.QSizePolicy.Expanding, qtw.QSizePolicy.Minimum)
         layout_top.addSpacerItem(structure_spacer)
 
+
+
+        structure_phrase_toggle = qtw.QWidget()
+        structure_phrase_toggle.setSizePolicy(
+            qtw.QSizePolicy.Fixed,
+            qtw.QSizePolicy.Ignored)
+        structure_phrase_toggle.setFixedHeight(5)
+        # We'll overwrite this later, but for right now I don't want the size of this section messing with
+        # the calculated size of the full top strip.
+        layout_phrase_toggle = qtw.QVBoxLayout(structure_phrase_toggle)
         self.widget_phrase_toggle = qte.AnimatedToggle(
             pulse_checked_color="#00000000", # First two letters are alpha
             pulse_unchecked_color="#00000000"
             )
         self.widget_phrase_toggle.clicked.connect(self.phrase_clicked)
-        layout_top.addWidget(self.widget_phrase_toggle)
+        layout_phrase_toggle.addWidget(self.widget_phrase_toggle)
+        self.widget_phrase_label = qtw.QLabel('...')
+        self.widget_phrase_label.setFont(font_typewriter_small)
+        self.widget_phrase_label.setAlignment(qtc.Qt.AlignHCenter)
+        layout_phrase_toggle.addWidget(self.widget_phrase_label) 
+        layout_top.addWidget(structure_phrase_toggle)
+
         self.widget_size_phrase = qtw.QSpinBox()
-        self.widget_size_phrase.setSizePolicy(
-            qtw.QSizePolicy.Maximum,
-            qtw.QSizePolicy.Minimum)
         self.widget_size_phrase.wheelEvent = lambda _: None 
         # I'm sure there are 4 or 5 people who use the mouse wheel to activate one of these. 
         # For everyone else, the mouse wheel is there to scroll the window, not screw with values.
         # There's nothing worse than trying to scroll the window and instead the mouse catches on a
         # value box for a moment and stops scrolling and starts adjusting the thing in the box instead.
+        self.widget_size_phrase.setFont(font_typewriter)
         layout_top.addWidget(self.widget_size_phrase)
 
 
-        self.widget_gen_button = qtw.QPushButton('Generate')
+        dynamic_height = int(structure_top_strip.sizeHint().height())
+        structure_phrase_toggle.setFixedHeight(dynamic_height)
+
+
+
+        self.widget_gen_button = qtw.QPushButton('generate')
         self.widget_gen_button.clicked.connect(self.generating_pass)
+        self.widget_gen_button.setFont(font_typewriter)
         layout_top.addWidget(self.widget_gen_button)
 
         widget_del_button = qtw.QPushButton('-')
@@ -87,7 +119,9 @@ class Q_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Maximum,
             qtw.QSizePolicy.Maximum)
         widget_del_button.clicked.connect(self.requesting_delete)
+        widget_del_button.setFont(font_typewriter)
         layout_top.addWidget(widget_del_button)
+
 
 
         self.initialize_values()
@@ -106,7 +140,11 @@ class Q_stack_widget(qtw.QFrame):
         size = self.widget_size_phrase.value()
         domain = self.widget_domain.text()
         if password == '':
-            self.widget_gen_field.setPlaceholderText('Please enter a password.')
+            self.widget_gen_field.setText('')
+            self.widget_gen_field.setPlaceholderText('please enter a password.')
+        elif len(password) < 10:
+            self.widget_gen_field.setText('')
+            self.widget_gen_field.setPlaceholderText('please enter a longer password.')
         else:
             if self.phrase_toggle_state == 2:
                 self.widget_gen_field.setText(logic.hash_gen(domain, password, size, salt))
@@ -132,32 +170,35 @@ class Q_stack_widget(qtw.QFrame):
             spinbox.setMaximum(258)
             spinbox.setMinimum(20)
             spinbox.setValue(secure)
+            self.widget_phrase_label.setText('hash')
         if slider.checkState() == 0: # Passphrase
             spinbox.setMaximum(20)
             spinbox.setMinimum(6)
             spinbox.setValue(phrase)
+            self.widget_phrase_label.setText('passphrase')
+
 
     def save_settings(self):
         domain = self.widget_domain.text()
         phrase_state = self.widget_phrase_toggle.checkState()
         gen_size = self.widget_size_phrase.value()
         
-        self.settings.setValue(f'Domains/{domain}', f'{phrase_state}|{gen_size}')
+        self.settings.setValue(f'domains/{domain}', f'{phrase_state}|{gen_size}')
 
 
-        order = self.settings.value('Config/Order')
+        order = self.settings.value('config/order')
         updated_order = order + domain + ','
-        self.settings.setValue(f'Config/Order', updated_order)
+        self.settings.setValue(f'config/order', updated_order)
 
     def initialize_values(self):
 
         domain = self.widget_domain.text()
 
         try:
-            init_settings = self.settings.value(f'Domains/{domain}')
+            init_settings = self.settings.value(f'domains/{domain}')
             init_settings = init_settings.split("|")
         except:
-            init_settings = self.settings.value('Config/Default')
+            init_settings = self.settings.value('config/default')
             init_settings = init_settings.split("|")
 
         phrase_state = int(init_settings[0])
@@ -166,6 +207,8 @@ class Q_stack_widget(qtw.QFrame):
         if phrase_state == 2:
             secure = int(init_settings[1])
             self.change_max_type(secure=secure)
+            self.widget_phrase_label.setText('hash')
         elif phrase_state == 0:
             phrase = int(init_settings[1])
             self.change_max_type(phrase=phrase)
+            self.widget_phrase_label.setText('passphrase')

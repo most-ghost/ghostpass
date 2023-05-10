@@ -23,19 +23,19 @@ class main_window(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
 
-        # font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
-        # font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
-        # font = qtg.QFont(font_family)
-        # self.setFont(font)
+        font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+        font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
+        font_typewriter_big = qtg.QFont(font_family)
+        font_typewriter_big.setPointSize(18)
 
 
         self.settings = qtc.QSettings('most_ghost', 'ghostpass')
 
         try:
-            test = self.settings.value('Config/Default')
+            test = self.settings.value('config/default')
             test.split('|')
         except:
-            self.settings.setValue('Config/Default', '2|128')
+            self.settings.setValue('config/default', '2|128')
 
 
 
@@ -69,8 +69,9 @@ class main_window(qtw.QMainWindow):
         # As long as I know I'm looking for, say, a layout, I can ctrl+F for 'layout_' and cycle through them.
         # It's pretty useful.
 
-        widget_logo = qtw.QLabel('GHOSTPASS')
+        widget_logo = qtw.QLabel('ghostpass')
         widget_logo.setFixedHeight(80)
+        widget_logo.setFont(font_typewriter_big)
         widget_logo.setAlignment(qtc.Qt.AlignHCenter | 
                              qtc.Qt.AlignVCenter) #qtc.Qt.AlignRight 
         layout_top.addWidget(widget_logo)
@@ -81,15 +82,18 @@ class main_window(qtw.QMainWindow):
         # The 'pass layer' refers to the strip or layer of GUI that is going to hold my password fields.
 
         self.widget_pass_edit = qte.PasswordEdit()
-        self.widget_pass_edit.setPlaceholderText('Password')
+        self.widget_pass_edit.setPlaceholderText('password')
+        self.widget_pass_edit.setFont(font_typewriter_big)
         self.widget_pass_edit.on_toggle_password_Action() # These are the magic sauce to force visible
         layout_pass.addWidget(self.widget_pass_edit, 2)
         self.widget_salt_edit = qte.PasswordEdit()
-        self.widget_salt_edit.setPlaceholderText('Double Pass')
+        self.widget_salt_edit.setPlaceholderText('double pass')
         self.widget_salt_edit.on_toggle_password_Action()
+        self.widget_salt_edit.setFont(font_typewriter_big)
         layout_pass.addWidget(self.widget_salt_edit, 1)
-        widget_gen_all = qtw.QPushButton('Generate All')
+        widget_gen_all = qtw.QPushButton('generate all')
         widget_gen_all.clicked.connect(self.generate_all)
+        widget_gen_all.setFont(font_typewriter_big)
         layout_pass.addWidget(widget_gen_all, 1)
 
         structure_scroll_area = qtw.QScrollArea()
@@ -103,6 +107,7 @@ class main_window(qtw.QMainWindow):
 
 
         widget_add_stack = qtw.QPushButton('+')
+        widget_add_stack.setFont(font_typewriter_big)
         widget_add_stack.clicked.connect(
             lambda: self.add_stack() ) 
         # The reason to hide this behind a lambda is because by default 'clicked' attaches a bool,
@@ -164,7 +169,7 @@ class main_window(qtw.QMainWindow):
 
     def settings_init(self):
         try:
-            size = self.settings.value('Config/Size')
+            size = self.settings.value('config/size')
             size = size.split(',')
             self.resize(qtc.QSize(int(size[0]),int(size[1])))
         except (TypeError, AttributeError):
@@ -173,7 +178,7 @@ class main_window(qtw.QMainWindow):
         self.setMinimumSize(qtc.QSize(600, 400))
 
         domains = []
-        order = self.settings.value('Config/Order')
+        order = self.settings.value('config/order')
         try:
             order = order[:-1].split(',')
             if type(order) != list:
@@ -199,9 +204,9 @@ class main_window(qtw.QMainWindow):
     def settings_update(self):
         
         self.settings.clear()
-        self.settings.setValue('Config/Size', f'{self.size().width()},{self.size().height()}')
-        self.settings.setValue('Config/Order', '')
-        self.settings.setValue('Config/Default', '2|128')
+        self.settings.setValue('config/size', f'{self.size().width()},{self.size().height()}')
+        self.settings.setValue('config/order', '')
+        self.settings.setValue('config/default', '2|128')
 
         index = self.layout_scroll.count()
         for i in range(index - 1):
@@ -229,8 +234,8 @@ class main_window(qtw.QMainWindow):
             self,
             "Select the file to export to...",
             qtc.QDir.homePath(),
-            'GhostFile.woo (*.woo)',
-            'GhostFile.woo (*.woo)')
+            'GhostFile (*.woo)',
+            'GhostFile (*.woo)')
         
         if filename:
             if filename[-4:] != '.woo':
@@ -250,8 +255,8 @@ class main_window(qtw.QMainWindow):
             self,
             "Select the file to import...",
             qtc.QDir.homePath(),
-            'GhostFile.woo (*.woo)',
-            'GhostFile.woo (*.woo)'
+            'GhostFile (*.woo)',
+            'GhostFile (*.woo)'
         )
 
         if filename:
@@ -273,17 +278,11 @@ class main_window(qtw.QMainWindow):
     # We're overwriting Qt's own 'close' function, just so that we can tack on one last settings update.
     # Just to make extra sure we're up to date.
     
+
     
 
 if __name__ == '__main__': 
     app = qtw.QApplication(sys.argv)
-
-    # Move this up into the main window code rather than just universally applying the font to the whole thing.
-    font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
-    font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
-    font = qtg.QFont(font_family)
-    font.setPointSize(15)
-    app.setFont(font)
 
 #    app.setStyle('Fusion')
     styles = qtw.QStyleFactory.keys()
