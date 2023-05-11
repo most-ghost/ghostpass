@@ -6,6 +6,7 @@ from PyQt5 import QtCore as qtc
 import qtwidgets as qte # As in Qt Extra
 import ghostlogic
 import ghoststack
+import ghostmemory
 
 import qtstyles as qts
 

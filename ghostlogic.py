@@ -59,7 +59,12 @@ class logic(qtc.QObject):
         # the master password using this pseudo 256-bit hash- I'm hoping that the password + salt 
         # system will be enough to prevent those sorts of shenanigans. 
 
-        return(extra_scrambly[0:size])
+
+        return(extra_scrambly[-size:])
+        # The '[-size:] thing instead of [0:size] is purely image - if you increase the size of the 
+        # password, it will get tacked onto the front instead of the back. Psychologically it seems 
+        # like more password is being generated rather than revealing more of the existing password
+        # (which is what's actually happening).
 
 
     def pseudo_salt(self, ascii_password, potential_salt):
@@ -95,4 +100,4 @@ class logic(qtc.QObject):
         pass_phrase = ''.join(word_list)
 
         return pass_phrase
-        
+            

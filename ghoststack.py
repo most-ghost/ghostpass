@@ -3,6 +3,7 @@ from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import qtwidgets as qte # As in Qt Extra
 import ghostlogic
+import ghostmemory
 
 logic = ghostlogic.logic()
 
@@ -123,6 +124,9 @@ class Q_stack_widget(qtw.QFrame):
         layout_top.addWidget(widget_del_button)
 
 
+        structure_top_strip.setStyleSheet("background-color: rgba(255, 0, 0, 0);") ### TEMPORARY
+        self.setStyleSheet("background-color: rgba(0, 0, 0, 127);") ### TEMPORARY
+
 
         self.initialize_values()
 
@@ -170,11 +174,13 @@ class Q_stack_widget(qtw.QFrame):
             spinbox.setMaximum(258)
             spinbox.setMinimum(20)
             spinbox.setValue(secure)
+            spinbox.setSuffix(' chars')
             self.widget_phrase_label.setText('hash')
         if slider.checkState() == 0: # Passphrase
             spinbox.setMaximum(20)
             spinbox.setMinimum(6)
             spinbox.setValue(phrase)
+            spinbox.setSuffix(' words')
             self.widget_phrase_label.setText('passphrase')
 
 
@@ -208,7 +214,9 @@ class Q_stack_widget(qtw.QFrame):
             secure = int(init_settings[1])
             self.change_max_type(secure=secure)
             self.widget_phrase_label.setText('hash')
+            self.widget_size_phrase.setSuffix(' chars')
         elif phrase_state == 0:
             phrase = int(init_settings[1])
             self.change_max_type(phrase=phrase)
             self.widget_phrase_label.setText('passphrase')
+            self.widget_size_phrase.setSuffix(' words')
