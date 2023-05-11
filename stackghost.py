@@ -2,10 +2,10 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import qtwidgets as qte # As in Qt Extra
-import ghostlogic
-import ghostmemory
+import smartghost as smartghost
+import memghost as memghost
 
-logic = ghostlogic.logic()
+logic = smartghost.logic()
 
 
 class Q_stack_widget(qtw.QFrame):

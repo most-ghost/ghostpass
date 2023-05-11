@@ -15,10 +15,12 @@ key = marshal.load(k)
 exec(key)
 crypt_key = crypt_gen()
 # (Psst- this actually isn't secure at all, I'm just playing pretend and making it look
-# like I'm doing something.)
+# like I'm doing something and giving a potential attacker something to do.)
 # The purpose of this is to obscure the word dictionary that we pull from for pass phrases,
-# however we use over 17500 words. With our minimum of six words that is twenty-eight septillion
-# possible combinations. At the default of 10 words, it's over 250 undecillion combos.
+# but we use over 17500 words. With our minimum of six words that is twenty-eight septillion
+# possible combinations. At the default of 10 words, it's well over 250 undecillion combos.
+# So even if an attacker/hacker gets a good look at our dictionary, they're still going to
+# have a hard time brute forcing anything.
 # If this happens to break in the future, try bumping .seek by 4 (ie to either 20 or to 12).
 
 class logic(qtc.QObject):

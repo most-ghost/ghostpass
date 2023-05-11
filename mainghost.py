@@ -4,9 +4,9 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import qtwidgets as qte # As in Qt Extra
-import ghostlogic
-import ghoststack
-import ghostmemory
+import smartghost
+import stackghost
+import memghost
 
 import qtstyles as qts
 
@@ -16,8 +16,7 @@ import qtstyles as qts
 # The password generation stuff is in ghostlogic.py 
 
 
-
-logic = ghostlogic.logic()
+logic = smartghost.logic()
 
 class main_window(qtw.QMainWindow):
 
@@ -28,6 +27,7 @@ class main_window(qtw.QMainWindow):
         font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
         font_typewriter_big = qtg.QFont(font_family)
         font_typewriter_big.setPointSize(18)
+        self.font = font_typewriter_big
 
 
         self.settings = qtc.QSettings('most_ghost', 'ghostpass')
@@ -133,6 +133,8 @@ class main_window(qtw.QMainWindow):
 
         self.show()
 
+        self.show_settings()
+
 
 
     def add_stack(self, domain='domain'):
@@ -143,7 +145,7 @@ class main_window(qtw.QMainWindow):
         self.setUpdatesEnabled(False)
         # I was catching some visual glitchiness where the screen would jitter. 
         # This forces Qt to take a quick break so that it is fully updated before continuing.
-        widget_stack = ghoststack.Q_stack_widget(pass_widget, salt_widget, settings, domain)
+        widget_stack = stackghost.Q_stack_widget(pass_widget, salt_widget, settings, domain)
         widget_stack.signal_delete.connect(lambda: self.remove_stack(widget_stack))
         layout.insertWidget(layout.count() - 1, widget_stack)
         qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
@@ -271,6 +273,12 @@ class main_window(qtw.QMainWindow):
             self.reset_scroll_area()
 
 
+    def show_settings(self):
+        settings_dialog = memghost.settings_dialog(self) # I'm not entirely sure what the deal with this second 'self' is. It's related to the no parent thing above, but how exactly, I'm not sure.
+        settings_dialog.exec()
+
+
+
 
     def closeEvent(self, event):
 
@@ -287,7 +295,6 @@ if __name__ == '__main__':
 
 #    app.setStyle('Fusion')
     styles = qtw.QStyleFactory.keys()
-    app.setStyleSheet(qts.StylePicker("breeze-dark").get_sheet())
     mw = main_window()
     sys.exit(app.exec())
 
