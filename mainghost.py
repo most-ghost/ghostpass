@@ -4,7 +4,6 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import qtwidgets as qte # As in Qt Extra
-import smartghost
 import stackghost
 import memghost
 
@@ -16,29 +15,28 @@ import qtstyles as qts
 # The password generation stuff is in ghostlogic.py 
 
 
-logic = smartghost.logic()
-
 class main_window(qtw.QMainWindow):
 
     def __init__(self):
         super().__init__()
+
+        self.memory = memghost.memory()
+        self.memory.stack_pass.connect(self.add_stack)
+
+        try:
+            size = qtc.QSettings('most_ghost', 'ghostpass').value('config/size')
+            size = size.split(',')
+            self.resize(qtc.QSize(int(size[0]),int(size[1])))
+        except (TypeError, AttributeError):
+            self.resize(qtc.QSize(600, 900))
+        self.setMinimumSize(qtc.QSize(600, 400))
+
 
         font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
         font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
         font_typewriter_big = qtg.QFont(font_family)
         font_typewriter_big.setPointSize(18)
         self.font = font_typewriter_big
-
-
-        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
-
-        try:
-            test = self.settings.value('config/default')
-            test.split('|')
-        except:
-            self.settings.setValue('config/default', '2|128')
-
-
 
         self.setWindowTitle('ghostpass')
         self.setWindowIconText('ghostpass')
@@ -53,8 +51,9 @@ class main_window(qtw.QMainWindow):
         action_help = menu_help.addAction('Help')
         action_about = menu_help.addAction('About')
 
-        action_export.triggered.connect(self.export_settings)
-        action_import.triggered.connect(self.import_settings)
+        action_export.triggered.connect(self.memory.export_settings)
+        action_import.triggered.connect(self.memory.import_settings)
+        action_preferences.triggered.connect(self.show_settings)
         action_quit.triggered.connect(sys.exit)
 
         structure_top = qtw.QWidget(self) 
@@ -121,31 +120,29 @@ class main_window(qtw.QMainWindow):
         structure_scroll_area.setWidgetResizable(True)
         layout_top.addWidget(structure_scroll_area)
 
-        self.settings_init()
+        self.memory.settings_init()
         # Now that everything's all set up and ready for us, we're going to load what the user previously 
         # had out of their settings and re-fill the GUI with their stuff.
 
-        self.timer = qtc.QTimer()
-        self.timer.timeout.connect(self.settings_update)
-        self.timer.start(1000) # Call the timer, and re-apply our settings, every second (1000 milliseconds).
-        # Maybe this seems excessive, but it doesn't really tax the system so why not? 
-        # This way the settings should pretty much always be in sync.
+        # self.timer = qtc.QTimer()
+        # self.timer.timeout.connect(lambda: self.memory.settings_update(self.layout_scroll))
+        # self.timer.start(1000) # Call the timer, and re-apply our settings, every second (1000 milliseconds).
+        # # Maybe this seems excessive, but it doesn't really tax the system so why not? 
+        # # This way the settings should pretty much always be in sync.
 
         self.show()
 
         self.show_settings()
 
 
-
     def add_stack(self, domain='domain'):
         pass_widget = self.widget_pass_edit
         salt_widget = self.widget_salt_edit
         layout = self.layout_scroll
-        settings = self.settings
         self.setUpdatesEnabled(False)
         # I was catching some visual glitchiness where the screen would jitter. 
         # This forces Qt to take a quick break so that it is fully updated before continuing.
-        widget_stack = stackghost.Q_stack_widget(pass_widget, salt_widget, settings, domain)
+        widget_stack = stackghost.Q_stack_widget(pass_widget, salt_widget, domain)
         widget_stack.signal_delete.connect(lambda: self.remove_stack(widget_stack))
         layout.insertWidget(layout.count() - 1, widget_stack)
         qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
@@ -154,12 +151,14 @@ class main_window(qtw.QMainWindow):
         # It seems to work and forces the GUI to do any jittery thinky things off-screen and in the 
         # background, where it won't bother us.
 
+
     def remove_stack(self, widget_stack):
         self.setUpdatesEnabled(False)
         widget_stack.deleteLater()
         qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
         qtc.QTimer.singleShot(2, lambda: self.repaint())
         # Actually this maybe could've been handled within ghoststack.py? Oh well, it's here now.
+
 
     def generate_all(self):
         index = self.layout_scroll.count()
@@ -170,53 +169,6 @@ class main_window(qtw.QMainWindow):
         # 'Generate all' as in generate all passwords. This just goes ahead and clicks that 'generate'
         # button on each widget for you.
 
-    def settings_init(self):
-        try:
-            size = self.settings.value('config/size')
-            size = size.split(',')
-            self.resize(qtc.QSize(int(size[0]),int(size[1])))
-        except (TypeError, AttributeError):
-            self.resize(qtc.QSize(600, 900))
-
-        self.setMinimumSize(qtc.QSize(600, 400))
-
-        domains = []
-        order = self.settings.value('config/order')
-        try:
-            order = order[:-1].split(',')
-            if type(order) != list:
-                raise ValueError
-            if order[0] == '':
-                raise ValueError
-        except (ValueError, TypeError):
-            order = ['facebook', 'google', 'twitter']
-
-        for i in order: 
-            if i in domains:
-                continue
-            domains.append(i)
-        for i in domains:
-            self.add_stack(i)
-        # Normally I'd use a set to remove duplicates, but in this case the whole point is to keep the 
-        # order of the widgets in the list. So this works to remove duplicates instead.
-        # What will happen with this is that the last duplicate widget will get deleted, however the settings
-        # on that widget are kept. I think this is a feature, not a bug- someone is probably adding their new domain
-        # to the bottom because they don't see it on the list above, so we want to keep those newest settings. But
-        # we don't want duplicates cluttering up the list if it's already on there.
-
-    def settings_update(self):
-        
-        self.settings.clear()
-        self.settings.setValue('config/size', f'{self.size().width()},{self.size().height()}')
-        self.settings.setValue('config/order', '')
-        self.settings.setValue('config/default', '2|128')
-
-        index = self.layout_scroll.count()
-        for i in range(index - 1):
-            widget = self.layout_scroll.itemAt(i).widget()
-            widget.save_settings()
-        # Each stack is responsible for managing its own settings. It'll also tack its name onto the 'order' setting
-        # before passing it along to the next one, so we'll get a handy list of which widgets go in which order.
 
     def reset_scroll_area(self):
         self.setUpdatesEnabled(False)
@@ -226,51 +178,9 @@ class main_window(qtw.QMainWindow):
             widget = self.layout_scroll.itemAt(i).widget()
             widget.deleteLater()
         
-        self.settings_init()
+        # self.memory.settings_init()
         qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
         qtc.QTimer.singleShot(2, lambda: self.repaint())
-
-    def export_settings(self):
-        self.settings_update()
-
-        filename, _= qtw.QFileDialog().getSaveFileName(
-            self,
-            "Select the file to export to...",
-            qtc.QDir.homePath(),
-            'GhostFile (*.woo)',
-            'GhostFile (*.woo)')
-        
-        if filename:
-            if filename[-4:] != '.woo':
-                filename = filename + '.woo'
-            keys = self.settings.allKeys()
-            settings_dict = {}
-            for key in keys:
-                value = self.settings.value(key)
-                settings_dict[key] = value
-            with open(filename, "w") as f:
-                json.dump(settings_dict, f, indent=4)
-        # It's vitally important that we use that .woo filename.
-        # A lot of functionality is hidden in those 3 letters.
-
-    def import_settings(self):
-        filename, _ = qtw.QFileDialog().getOpenFileName(
-            self,
-            "Select the file to import...",
-            qtc.QDir.homePath(),
-            'GhostFile (*.woo)',
-            'GhostFile (*.woo)'
-        )
-
-        if filename:
-            self.settings.clear()
-            with open(filename, "r") as f:
-                settings_dict = json.load(f)
-            
-            for key, value in settings_dict.items():
-                self.settings.setValue(key, value)
-            
-            self.reset_scroll_area()
 
 
     def show_settings(self):
@@ -278,11 +188,10 @@ class main_window(qtw.QMainWindow):
         settings_dialog.exec()
 
 
-
-
     def closeEvent(self, event):
 
-        self.settings_update()
+        self.memory.settings_update(self.layout_scroll)
+        qtc.QSettings('most_ghost', 'ghostpass').setValue('config/size', f'{self.size().width()},{self.size().height()}')
         super().closeEvent(event)
     # We're overwriting Qt's own 'close' function, just so that we can tack on one last settings update.
     # Just to make extra sure we're up to date.
@@ -295,7 +204,7 @@ if __name__ == '__main__':
 
 #    app.setStyle('Fusion')
     styles = qtw.QStyleFactory.keys()
-    mw = main_window()
+    window_main = main_window()
     sys.exit(app.exec())
 
 

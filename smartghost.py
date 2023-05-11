@@ -89,11 +89,9 @@ class logic(qtc.QObject):
         csv = self.dictionary
         alphabet = string_consts.ascii_lowercase
 
-
         hexed = self.hex_gen(domain, password, salt)
         alphahexed = "".join([alphabet[i % 26] for i in hexed])
     
-
         for i in range(num_of_words):
             index = 3 * i
             new_word = csv[csv['Combo'] == alphahexed[index:index+3]]['Word'].values[0]

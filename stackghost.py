@@ -3,18 +3,16 @@ from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import qtwidgets as qte # As in Qt Extra
 import smartghost as smartghost
-import memghost as memghost
+import memghost
 
 logic = smartghost.logic()
-
 
 class Q_stack_widget(qtw.QFrame):
 
     signal_delete = qtc.pyqtSignal(qtc.QObject)
 
-    def __init__(self, pass_widget, salt_widget, settings, domain):
+    def __init__(self, pass_widget, salt_widget, domain):
         super().__init__()
-        self.settings = settings
 
         font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
         font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
@@ -124,8 +122,8 @@ class Q_stack_widget(qtw.QFrame):
         layout_top.addWidget(widget_del_button)
 
 
-        structure_top_strip.setStyleSheet("background-color: rgba(255, 0, 0, 0);") ### TEMPORARY
-        self.setStyleSheet("background-color: rgba(0, 0, 0, 127);") ### TEMPORARY
+        # structure_top_strip.setStyleSheet("background-color: rgba(255, 0, 0, 0);") ### TEMPORARY
+        # self.setStyleSheet("background-color: rgba(0, 0, 0, 127);") ### TEMPORARY
 
 
         self.initialize_values()
@@ -167,9 +165,11 @@ class Q_stack_widget(qtw.QFrame):
         self.phrase_toggle_state = self.widget_phrase_toggle.checkState()
         self.change_max_type()
         
-    def change_max_type(self, secure=128, phrase=10):
+    def change_max_type(self):
         slider = self.widget_phrase_toggle
         spinbox = self.widget_size_phrase
+        secure = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_hash'))
+        phrase = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_hash'))
         if slider.checkState() == 2: # Secure
             spinbox.setMaximum(258)
             spinbox.setMinimum(20)
@@ -189,34 +189,36 @@ class Q_stack_widget(qtw.QFrame):
         phrase_state = self.widget_phrase_toggle.checkState()
         gen_size = self.widget_size_phrase.value()
         
-        self.settings.setValue(f'domains/{domain}', f'{phrase_state}|{gen_size}')
+        qtc.QSettings('most_ghost', 'ghostpass').setValue(f'domains/{domain}', f'{phrase_state}|{gen_size}')
 
 
-        order = self.settings.value('config/order')
+        order = qtc.QSettings('most_ghost', 'ghostpass').value('config/order')
         updated_order = order + domain + ','
-        self.settings.setValue(f'config/order', updated_order)
+        qtc.QSettings('most_ghost', 'ghostpass').setValue(f'config/order', updated_order)
 
     def initialize_values(self):
 
         domain = self.widget_domain.text()
 
         try:
-            init_settings = self.settings.value(f'domains/{domain}')
+            init_settings = qtc.QSettings('most_ghost', 'ghostpass').value(f'domains/{domain}')
             init_settings = init_settings.split("|")
-        except:
-            init_settings = self.settings.value('config/default')
-            init_settings = init_settings.split("|")
+            phrase_state = int(init_settings[0])
+        except AttributeError:
+            default = qtc.QSettings('most_ghost', 'ghostpass').value(f'config/default_type')
+            if default == 'hash':
+                phrase_state = 2
+            elif default == 'word':
+                phrase_state = 0
 
-        phrase_state = int(init_settings[0])
         self.widget_phrase_toggle.setCheckState(phrase_state)
         self.phrase_toggle_state = self.widget_phrase_toggle.checkState()
         if phrase_state == 2:
-            secure = int(init_settings[1])
-            self.change_max_type(secure=secure)
+            self.change_max_type()
             self.widget_phrase_label.setText('hash')
             self.widget_size_phrase.setSuffix(' chars')
-        elif phrase_state == 0:
-            phrase = int(init_settings[1])
-            self.change_max_type(phrase=phrase)
+        elif phrase_state == 'word':
+            self.change_max_type()
             self.widget_phrase_label.setText('passphrase')
             self.widget_size_phrase.setSuffix(' words')
+
