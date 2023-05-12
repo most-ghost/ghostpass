@@ -1,9 +1,8 @@
-
-import sys
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import json
+import os
 
 preferences =   {'config/pass_visible':'no', 
                  'config/second_required': 'yes',
@@ -18,7 +17,9 @@ class settings_dialog(qtw.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent, modal=False)
 
-        dialog_font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+        dialog_font_id = qtg.QFontDatabase.addApplicationFont(
+            os.path.join(
+            os.path.dirname(__file__), "typewcond_demi.otf"))
         dialog_font_family = qtg.QFontDatabase.applicationFontFamilies(dialog_font_id)[0]
         dialog_font_typewriter = qtg.QFont(dialog_font_family)
         dialog_font_typewriter.setPointSize(15)
@@ -105,6 +106,7 @@ class settings_dialog(qtw.QDialog):
 class memory(qtc.QObject):
 
     stack_pass = qtc.pyqtSignal(str)
+    signal_reset = qtc.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -166,10 +168,9 @@ class memory(qtc.QObject):
         # before passing it along to the next one, so we'll get a handy list of which widgets go in which order.
 
     def export_settings(self):
-        self.settings_update()
 
         filename, _= qtw.QFileDialog().getSaveFileName(
-            self,
+            None,
             "Select the file to export to...",
             qtc.QDir.homePath(),
             'GhostFile (*.woo)',
@@ -190,7 +191,7 @@ class memory(qtc.QObject):
 
     def import_settings(self):
         filename, _ = qtw.QFileDialog().getOpenFileName(
-            self,
+            None,
             "Select the file to import...",
             qtc.QDir.homePath(),
             'GhostFile (*.woo)',
@@ -204,6 +205,7 @@ class memory(qtc.QObject):
             
             for key, value in settings_dict.items():
                 self.settings.setValue(key, value)
+
             
-            self.reset_scroll_area()
-            
+            self.signal_reset.emit()
+            self.settings_init()

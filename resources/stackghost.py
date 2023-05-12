@@ -1,8 +1,9 @@
+import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
-import qtextramods as qte 
-import smartghost as smartghost
+import resources.qtextramods as qte 
+import resources.smartghost as smartghost
 
 logic = smartghost.logic()
 
@@ -14,7 +15,9 @@ class class_stack_widget(qtw.QFrame):
     def __init__(self, pass_widget, salt_widget, domain):
         super().__init__()
 
-        font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+        font_id = qtg.QFontDatabase.addApplicationFont(
+            os.path.join(
+            os.path.dirname(__file__), "typewcond_demi.otf"))
         font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
         font_typewriter = qtg.QFont(font_family)
         font_typewriter.setPointSize(15)

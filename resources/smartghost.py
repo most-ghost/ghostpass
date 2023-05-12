@@ -1,3 +1,4 @@
+import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
@@ -9,7 +10,10 @@ import cryptpandas as crp
 
 
 import marshal
-k = open('ghostpass/ghostkey.pyc', 'rb')
+
+path = os.path.join(os.path.dirname(__file__), "ghostkey.pyc")
+
+k = open(path, 'rb')
 k.seek(16)
 key = marshal.load(k)
 exec(key)
@@ -27,7 +31,7 @@ class logic(qtc.QObject):
     def __init__(self):
         super().__init__()
 
-        crypt_name = 'ghostpass/ghost.crypt'
+        crypt_name = os.path.join(os.path.dirname(__file__), "ghost.crypt")
 
         self.dictionary = crp.read_encrypted(path=crypt_name, 
             password=crypt_key)
@@ -95,7 +99,7 @@ class logic(qtc.QObject):
         for i in range(num_of_words):
             index = 3 * i
             new_word = csv[csv['Combo'] == alphahexed[index:index+3]]['Word'].values[0]
-            word_list.append(new_word)
+            word_list.insert(0, new_word)
 
         pass_phrase = ''.join(word_list)
 

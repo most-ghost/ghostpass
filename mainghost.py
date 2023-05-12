@@ -1,10 +1,12 @@
 import sys
+import os
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
-import qtextramods as qte
-import stackghost
-import memghost
+import resources.qtextramods as qte
+import resources.stackghost as stackghost
+import resources.memghost as memghost
+
 
 # This only contains stuff related to the main window and basic GUI drawing functions.
 # Any time you add a new stack to the main window, that stack is actually covered by ghoststack.py
@@ -18,6 +20,7 @@ class main_window(qtw.QMainWindow):
 
         self.memory = memghost.memory()
         self.memory.stack_pass.connect(self.add_stack)
+        self.memory.signal_reset.connect(self.reset_scroll_area)
 
 
         try:
@@ -29,7 +32,9 @@ class main_window(qtw.QMainWindow):
         self.setMinimumSize(qtc.QSize(600, 400))
 
 
-        font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
+        font_id = qtg.QFontDatabase.addApplicationFont(
+            os.path.join(
+            os.path.dirname(__file__), "resources/typewcond_demi.otf"))
         font_family = qtg.QFontDatabase.applicationFontFamilies(font_id)[0]
         font_typewriter_big = qtg.QFont(font_family)
         font_typewriter_big.setPointSize(18)
@@ -176,8 +181,8 @@ class main_window(qtw.QMainWindow):
             widget.deleteLater()
         
         # self.memory.settings_init()
-        qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
-        qtc.QTimer.singleShot(2, lambda: self.repaint())
+        qtc.QTimer.singleShot(4, lambda: self.setUpdatesEnabled(True))
+        qtc.QTimer.singleShot(5, lambda: self.repaint())
 
 
     def show_settings(self):
@@ -214,5 +219,3 @@ if __name__ == '__main__':
 # Comment all of the code
 # Thread the dictionary to load it in faster
 # Thread the update code as well
-# Passwords visible doesn't do anything
-# When quitting dialog, settings are updated once.
