@@ -1,18 +1,14 @@
 import sys
-import json
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
-import qtwidgets as qte # As in Qt Extra
+import qtextramods as qte
 import stackghost
 import memghost
 
-import qtstyles as qts
-
-
 # This only contains stuff related to the main window and basic GUI drawing functions.
 # Any time you add a new stack to the main window, that stack is actually covered by ghoststack.py
-# The password generation stuff is in ghostlogic.py 
+# The password generation stuff is in ghostlogic.py
 
 
 class main_window(qtw.QMainWindow):
@@ -22,6 +18,7 @@ class main_window(qtw.QMainWindow):
 
         self.memory = memghost.memory()
         self.memory.stack_pass.connect(self.add_stack)
+
 
         try:
             size = qtc.QSettings('most_ghost', 'ghostpass').value('config/size')
@@ -84,17 +81,19 @@ class main_window(qtw.QMainWindow):
         self.widget_pass_edit = qte.PasswordEdit()
         self.widget_pass_edit.setPlaceholderText('password')
         self.widget_pass_edit.setFont(font_typewriter_big)
-        self.widget_pass_edit.on_toggle_password_Action() # These are the magic sauce to force visible
         layout_pass.addWidget(self.widget_pass_edit, 2)
         self.widget_salt_edit = qte.PasswordEdit()
         self.widget_salt_edit.setPlaceholderText('double pass')
-        self.widget_salt_edit.on_toggle_password_Action()
         self.widget_salt_edit.setFont(font_typewriter_big)
         layout_pass.addWidget(self.widget_salt_edit, 1)
         widget_gen_all = qtw.QPushButton('generate all')
         widget_gen_all.clicked.connect(self.generate_all)
         widget_gen_all.setFont(font_typewriter_big)
         layout_pass.addWidget(widget_gen_all, 1)
+        if (qtc.QSettings('most_ghost', 'ghostpass').value('config/pass_visible')) == 'yes':
+            self.widget_pass_edit.on_toggle_password_Action()
+            self.widget_salt_edit.on_toggle_password_Action()
+
 
         structure_scroll_area = qtw.QScrollArea()
         structure_scroll_widget = qtw.QWidget()
@@ -132,9 +131,6 @@ class main_window(qtw.QMainWindow):
 
         self.show()
 
-        self.show_settings()
-
-
     def add_stack(self, domain='domain'):
         pass_widget = self.widget_pass_edit
         salt_widget = self.widget_salt_edit
@@ -142,8 +138,9 @@ class main_window(qtw.QMainWindow):
         self.setUpdatesEnabled(False)
         # I was catching some visual glitchiness where the screen would jitter. 
         # This forces Qt to take a quick break so that it is fully updated before continuing.
-        widget_stack = stackghost.Q_stack_widget(pass_widget, salt_widget, domain)
+        widget_stack = stackghost.class_stack_widget(pass_widget, salt_widget, domain)
         widget_stack.signal_delete.connect(lambda: self.remove_stack(widget_stack))
+        widget_stack.signal_update.connect(lambda: self.memory.settings_update(self.layout_scroll))
         layout.insertWidget(layout.count() - 1, widget_stack)
         qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
         qtc.QTimer.singleShot(2, lambda: self.repaint())
@@ -185,7 +182,9 @@ class main_window(qtw.QMainWindow):
 
     def show_settings(self):
         settings_dialog = memghost.settings_dialog(self) # I'm not entirely sure what the deal with this second 'self' is. It's related to the no parent thing above, but how exactly, I'm not sure.
+        settings_dialog.saved.connect(lambda: self.memory.settings_update(self.layout_scroll))
         settings_dialog.exec()
+        
 
 
     def closeEvent(self, event):
@@ -213,16 +212,7 @@ if __name__ == '__main__':
 ### TO DO LIST:
 
 # Comment all of the code
-
-# Settings dialog:
-# Default hash length
-# Default word length 
-# Default to hash or words?
-# Make sure to pull from defaults rather than domain name if domain name is 'domain'
-# Can I make the password fields default to visible?
-
 # Thread the dictionary to load it in faster
-
-# Change the password field to a text edit. Change and delete as many of the fixed size widgets as you can.
-
-# Expand the password mechanism to allow for 256 character max password
+# Thread the update code as well
+# Passwords visible doesn't do anything
+# When quitting dialog, settings are updated once.

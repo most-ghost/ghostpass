@@ -3,20 +3,20 @@ import sys
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
-import qtwidgets as qte # As in Qt Extra
-import qtstyles as qts
 import json
 
-preferences =   {'config/pass_visible':'1', 
-                 'config/second_required': '1',
+preferences =   {'config/pass_visible':'no', 
+                 'config/second_required': 'yes',
                  'config/default_type': 'hash', 
                  'config/default_len_hash': '128',
                  'config/default_len_word': '10'}
 
 class settings_dialog(qtw.QDialog):
-    """Dialog for changing settings."""
-    def __init__(self, parent=None): # Since we want this to be a floating box unlinked to another, we unset 'parent', I suppose. Since this is going to be a settings box we include our own variable for settings to be input.
-        super().__init__(parent, modal=False) # Note how Modal is set
+
+    saved = qtc.pyqtSignal()
+
+    def __init__(self, parent=None):
+        super().__init__(parent, modal=False)
 
         dialog_font_id = qtg.QFontDatabase.addApplicationFont('ghostpass/typewcond_demi.otf')
         dialog_font_family = qtg.QFontDatabase.applicationFontFamilies(dialog_font_id)[0]
@@ -27,13 +27,18 @@ class settings_dialog(qtw.QDialog):
 
         self.setLayout(qtw.QFormLayout())
         
-        self.widget_hash_length = qtw.QSpinBox()
-        self.widget_word_length = qtw.QSpinBox()
+        self.widget_visible_pass = qtw.QPushButton(preferences['config/pass_visible'])
+        self.widget_second_pass = qtw.QPushButton(preferences['config/second_required'])
         self.widget_hash_or_word = qtw.QComboBox()
         self.widget_hash_or_word.addItem("hash")
         self.widget_hash_or_word.addItem("word")
-        self.widget_visible_pass = qtw.QPushButton('Yes')
-        self.widget_second_pass = qtw.QPushButton('Yes')
+        self.widget_hash_or_word.setCurrentText(preferences['config/default_type'])
+        self.widget_hash_length = qtw.QSpinBox(maximum=256, minimum=20)
+        self.widget_hash_length.setValue(int(preferences['config/default_len_hash']))
+        self.widget_word_length = qtw.QSpinBox(maximum=20, minimum=6)
+        self.widget_word_length.setValue(int(preferences['config/default_len_word']))
+
+
         
         self.layout().addRow(
             qtw.QLabel('<h1>ghostpass</h1>')
@@ -59,9 +64,43 @@ class settings_dialog(qtw.QDialog):
             qtw.QLabel('<h6></h6>')
         )
 
-        self.close_btn = qtw.QPushButton('Close', clicked = self.close)
+        self.close_btn = qtw.QPushButton('Save', clicked = self.close)
         self.layout().addRow(self.close_btn)
 
+        self.widget_visible_pass.clicked.connect(self.hook_up_visible_pass)
+        self.widget_second_pass.clicked.connect(self.hook_up_second_pass)
+        self.widget_hash_or_word.currentTextChanged.connect(self.hook_up_hash_or_word)
+        self.widget_hash_length.valueChanged.connect(self.hook_up_hash_length)
+        self.widget_word_length.valueChanged.connect(self.hook_up_word_length)
+
+    def hook_up_visible_pass(self):
+        if preferences['config/pass_visible'] == 'yes':
+            preferences['config/pass_visible'] = 'no'
+        elif preferences['config/pass_visible'] == 'no':
+            preferences['config/pass_visible'] = 'yes'
+        self.widget_visible_pass.setText(preferences['config/pass_visible'])
+        
+    def hook_up_second_pass(self):
+        if preferences['config/second_required'] == 'yes':
+            preferences['config/second_required'] = 'no'
+        elif preferences['config/second_required'] == 'no':
+            preferences['config/second_required'] = 'yes'
+        self.widget_second_pass.setText(preferences['config/second_required'])
+
+    def hook_up_hash_or_word(self):
+        preferences['config/default_type'] = self.widget_hash_or_word.currentText()
+
+    def hook_up_hash_length(self):
+        preferences['config/default_len_hash'] = self.widget_hash_length.value()
+    
+    def hook_up_word_length(self):
+        preferences['config/default_len_word'] = self.widget_word_length.value()
+
+    def closeEvent(self, event):
+        self.saved.emit()
+        super().closeEvent(event)
+
+## Remember to update settings when dialog closed
 
 class memory(qtc.QObject):
 
@@ -76,7 +115,7 @@ class memory(qtc.QObject):
 
         for key in preferences.keys():
             if key in existing_keys:
-                continue
+                preferences[key] = self.settings.value(key)
             else:
                 self.settings.setValue(key, preferences[key])
 
@@ -84,6 +123,7 @@ class memory(qtc.QObject):
             # This is separated from the above because it will get loaded at the end of the main window
             # init, after the window is populated, while the above gets loaded in at the beginning while
             # the main window is still populating itself.
+        
         domains = []
         order = self.settings.value('config/order')
         try:
@@ -110,6 +150,7 @@ class memory(qtc.QObject):
 
 
     def settings_update(self, stack_layout):
+        print('Settings are being updated!')
         
         self.settings.clear()
         self.settings.setValue('config/order', '')
@@ -165,36 +206,4 @@ class memory(qtc.QObject):
                 self.settings.setValue(key, value)
             
             self.reset_scroll_area()
-
-
-### PLACEHOLDER STUFF DOWN BELOW###################################################################
-
-class MainWindow (qtw.QMainWindow):
-    def __init__(self):
-        super().__init__()
-        # Put your code in here
-
-
-
-        self.settings = {'show_warnings' : True}
-
-
-        button = qtw.QPushButton("settings")
-        button.clicked.connect(self.show_settings)
-        self.setCentralWidget(button)
-
-        self.show()
-
-        self.show_settings()
-
-
-        # End here
-
-    def show_settings(self):
-        settings = settings_dialog(self) # I'm not entirely sure what the deal with this second 'self' is. It's related to the no parent thing above, but how exactly, I'm not sure.
-        settings.exec()
-
-if __name__ == '__main__':
-    app = qtw.QApplication(sys.argv)
-    main_window = MainWindow()
-    sys.exit(app.exec())
+            

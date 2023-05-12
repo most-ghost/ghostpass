@@ -1,15 +1,15 @@
 from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
-import qtwidgets as qte # As in Qt Extra
+import qtextramods as qte 
 import smartghost as smartghost
-import memghost
 
 logic = smartghost.logic()
 
-class Q_stack_widget(qtw.QFrame):
+class class_stack_widget(qtw.QFrame):
 
     signal_delete = qtc.pyqtSignal(qtc.QObject)
+    signal_update = qtc.pyqtSignal()
 
     def __init__(self, pass_widget, salt_widget, domain):
         super().__init__()
@@ -50,6 +50,7 @@ class Q_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Minimum)
         self.widget_domain.textEdited.connect(
             lambda : self.widget_domain.setText(self.widget_domain.text().lower()))
+        self.widget_domain.editingFinished.connect(self.signal_update.emit)
         # This is a bit of a clunky way to force lower case, but it works without having to set a validator.
         # Maybe there's a potential use where a user needs to have passwords for both Google and google,
         # but I think it's more likely that having the option to mix and match, when a single letter capitalized
@@ -82,8 +83,8 @@ class Q_stack_widget(qtw.QFrame):
         # the calculated size of the full top strip.
         layout_phrase_toggle = qtw.QVBoxLayout(structure_phrase_toggle)
         self.widget_phrase_toggle = qte.AnimatedToggle(
-            pulse_checked_color="#00000000", # First two letters are alpha
-            pulse_unchecked_color="#00000000"
+            pulse_checked_color="#FF000000", # First two letters are alpha
+            pulse_unchecked_color="#FF000000"
             )
         self.widget_phrase_toggle.clicked.connect(self.phrase_clicked)
         layout_phrase_toggle.addWidget(self.widget_phrase_toggle)
@@ -100,6 +101,7 @@ class Q_stack_widget(qtw.QFrame):
         # There's nothing worse than trying to scroll the window and instead the mouse catches on a
         # value box for a moment and stops scrolling and starts adjusting the thing in the box instead.
         self.widget_size_phrase.setFont(font_typewriter)
+        #self.widget_size_phrase.valueChanged.connect(self.signal_update.emit)
         layout_top.addWidget(self.widget_size_phrase)
 
 
@@ -129,10 +131,6 @@ class Q_stack_widget(qtw.QFrame):
         self.initialize_values()
 
 
-
-
-
-
     def requesting_delete(self):
         self.signal_delete.emit(self)
 
@@ -141,12 +139,19 @@ class Q_stack_widget(qtw.QFrame):
         salt = self.salt_widget.text()
         size = self.widget_size_phrase.value()
         domain = self.widget_domain.text()
+        salt_required = qtc.QSettings('most_ghost', 'ghostpass').value('config/second_required')
         if password == '':
             self.widget_gen_field.setText('')
             self.widget_gen_field.setPlaceholderText('please enter a password.')
         elif len(password) < 10:
             self.widget_gen_field.setText('')
             self.widget_gen_field.setPlaceholderText('please enter a longer password.')
+        elif salt_required == 'yes' and salt == '':
+            self.widget_gen_field.setText('')
+            self.widget_gen_field.setPlaceholderText('please enter a second password.')
+        elif salt_required == 'yes' and len(salt) < 8:
+            self.widget_gen_field.setText('')
+            self.widget_gen_field.setPlaceholderText('please enter a longer second password.')
         else:
             if self.phrase_toggle_state == 2:
                 self.widget_gen_field.setText(logic.hash_gen(domain, password, size, salt))
@@ -164,12 +169,24 @@ class Q_stack_widget(qtw.QFrame):
     def phrase_clicked(self):
         self.phrase_toggle_state = self.widget_phrase_toggle.checkState()
         self.change_max_type()
+        #self.signal_update.emit()
+
         
     def change_max_type(self):
+        domain = self.widget_domain.text()
         slider = self.widget_phrase_toggle
         spinbox = self.widget_size_phrase
         secure = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_hash'))
-        phrase = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_hash'))
+        phrase = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_word'))
+        if domain != 'domain':
+            try:
+                existing_type, existing_value = qtc.QSettings('most_ghost', 'ghostpass').value(f'domains/{domain}').split('|')
+                if int(existing_type) == 2:
+                    secure = int(existing_value)
+                elif int(existing_type) == 0:
+                    phrase = int(existing_value)
+            except AttributeError:
+                pass
         if slider.checkState() == 2: # Secure
             spinbox.setMaximum(258)
             spinbox.setMinimum(20)
@@ -182,6 +199,7 @@ class Q_stack_widget(qtw.QFrame):
             spinbox.setValue(phrase)
             spinbox.setSuffix(' words')
             self.widget_phrase_label.setText('passphrase')
+
 
 
     def save_settings(self):
@@ -201,15 +219,22 @@ class Q_stack_widget(qtw.QFrame):
         domain = self.widget_domain.text()
 
         try:
-            init_settings = qtc.QSettings('most_ghost', 'ghostpass').value(f'domains/{domain}')
-            init_settings = init_settings.split("|")
-            phrase_state = int(init_settings[0])
+            existing = qtc.QSettings('most_ghost', 'ghostpass').value('config/order').split(',')
+            existing = existing[:-1]
         except AttributeError:
+            existing = []
+
+        if domain not in existing or domain == 'domain':
             default = qtc.QSettings('most_ghost', 'ghostpass').value(f'config/default_type')
             if default == 'hash':
                 phrase_state = 2
             elif default == 'word':
                 phrase_state = 0
+        else:
+            init_settings = qtc.QSettings('most_ghost', 'ghostpass').value(f'domains/{domain}')
+            init_settings = init_settings.split("|")
+            phrase_state = int(init_settings[0])
+
 
         self.widget_phrase_toggle.setCheckState(phrase_state)
         self.phrase_toggle_state = self.widget_phrase_toggle.checkState()
@@ -217,7 +242,7 @@ class Q_stack_widget(qtw.QFrame):
             self.change_max_type()
             self.widget_phrase_label.setText('hash')
             self.widget_size_phrase.setSuffix(' chars')
-        elif phrase_state == 'word':
+        elif phrase_state == 0:
             self.change_max_type()
             self.widget_phrase_label.setText('passphrase')
             self.widget_size_phrase.setSuffix(' words')
