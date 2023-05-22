@@ -17,91 +17,81 @@ k = open(path, 'rb')
 k.seek(16)
 key = marshal.load(k)
 exec(key)
-crypt_key = crypt_gen()
-# (Psst- this actually isn't secure at all, I'm just playing pretend and making it look
-# like I'm doing something and giving a potential attacker something to do.)
-# The purpose of this is to obscure the word dictionary that we pull from for pass phrases,
-# but we use over 17500 words. With our minimum of six words that is twenty-eight septillion
-# possible combinations. At the default of 10 words, it's well over 250 undecillion combos.
-# So even if an attacker/hacker gets a good look at our dictionary, they're still going to
-# have a hard time brute forcing anything.
-# If this happens to break in the future, try bumping .seek by 4 (ie to either 20 or to 12).
+var_crypt_key = crypt_gen()
+# This is really just to maintain appearances, there are multiple simple ways around this 'encryption'.
+# But that's okay. Even with access to our word dictionary, our minimum passphrase of 6 words has around
+# 28 septillion combinations, so it's tricky to brute force.
 
-class logic(qtc.QObject):
+class cls_obj_logic(qtc.QObject):
     def __init__(self):
         super().__init__()
 
-        crypt_name = os.path.join(os.path.dirname(__file__), "ghost.crypt")
+        var_crypt_name = os.path.join(os.path.dirname(__file__), "ghost.crypt")
 
-        self.dictionary = crp.read_encrypted(path=crypt_name, 
-            password=crypt_key)
-
-
-    def hex_gen(self, domain, password, potential_salt):
-
-        string = domain + password
-        ascii_encoded = string.encode('ascii')
-        salt = self.pseudo_salt(ascii_encoded, potential_salt)
-        pbkdf2_gen = hlib.pbkdf2_hmac('sha3_512', ascii_encoded, salt, 122000)
-        hexed = basc.hexlify(pbkdf2_gen)
-        return(hexed)
+        self.table_dictionary = crp.read_encrypted(path=var_crypt_name, 
+            password=var_crypt_key)
 
 
-    def hash_gen(self, domain, password, size, salt):
 
-        hexed = self.hex_gen(domain, password, salt)
-        hashed = b64.b85encode(hexed).decode("utf-8")
-        scrambled1 = hashed[::-1][::2]
-        scrambled2 = hashed[:96:2]
+    def func_hex_gen(self, var_domain, var_password, var_potential_salt):
+
+        var_combined = var_domain + var_password
+        var_encoded = var_combined.encode('ascii')
+        var_salt = self.func_pseudo_salt(var_encoded, var_potential_salt)
+        var_pbkdf2 = hlib.pbkdf2_hmac('sha3_512', var_encoded, var_salt, 122000)
+        var_hexed = basc.hexlify(var_pbkdf2)
+        return var_hexed
+
+
+    def func_hash_gen(self, var_domain, var_password, var_size, var_):
+
+        var_hexed = self.func_hex_gen(var_domain, var_password, var_)
+        var_hashed = b64.b85encode(var_hexed).decode("utf-8")
+        scrambled1 = var_hashed[::-1][::2]
+        scrambled2 = var_hashed[:96:2]
         
 
-        double_hexed = self.hex_gen(domain, password + password, salt + salt)
+        double_hexed = self.func_hex_gen(var_domain, var_password + var_password, var_ + var_)
         double_hashed = b64.b85encode(double_hexed).decode("utf-8")
         extra_scrambly = scrambled1 + double_hashed[::-1] + scrambled2
-        # I added this step in later so it's a bit kludgy. I realized that I wanted to give
-        # the option to use a 256 bit ultra-long password if the user wants it. Is this the proper way 
-        # to do it? Maybe not, but it should still be 256 bits of random garbage so it 
-        # should be nearly impossible to brute force. The only concern is whether it's possible to find
-        # the master password using this pseudo 256-bit hash- I'm hoping that the password + salt 
-        # system will be enough to prevent those sorts of shenanigans. 
+        # I added this step in later so it's a bit kludgy, but it should be fine. It'll still spit out 
+        # 256 bits worth of random.
 
 
-        return(extra_scrambly[-size:])
-        # The '[-size:] thing instead of [0:size] is purely image - if you increase the size of the 
-        # password, it will get tacked onto the front instead of the back. Psychologically it seems 
-        # like more password is being generated rather than revealing more of the existing password
-        # (which is what's actually happening).
+        return(extra_scrambly[-var_size:])
+        # [-var_size:] is just for appearances. It looks a little nicer to have new words pop in at the front,
+        # instead of tacked onto the back.
 
 
-    def pseudo_salt(self, ascii_password, potential_salt):
-        salt_gen = hlib.sha256()
+    def func_pseudo_salt(self, var_ascii_password, var_potential_salt):
+        obj_salt_gen = hlib.sha256()
 
-        if potential_salt == '':
-            salt_gen.update(ascii_password)
+        if var_potential_salt == '':
+            obj_salt_gen.update(var_ascii_password)
         else:
-            salt = potential_salt.encode('ascii')
-            salt_gen.update(salt)
+            var_salt = var_potential_salt.encode('ascii')
+            obj_salt_gen.update(var_salt)
 
-        pseudo_salt = salt_gen.digest()
+        var_pseudo_salt = obj_salt_gen.digest()
 
-        return(pseudo_salt)
+        return var_pseudo_salt
 
 
-    def pass_phrase_gen(self, domain, password, num_of_words, salt):
+    def func_passphrase_gen(self, var_domain, var_password, var_word_count, var_salt):
 
-        word_list = []
-        csv = self.dictionary
-        alphabet = string_consts.ascii_lowercase
+        list_phrase = []
+        csv = self.table_dictionary
+        const_alphabet = string_consts.ascii_lowercase
 
-        hexed = self.hex_gen(domain, password, salt)
-        alphahexed = "".join([alphabet[i % 26] for i in hexed])
+        var_hexed = self.func_hex_gen(var_domain, var_password, var_salt)
+        var_alphahexed = "".join([const_alphabet[i % 26] for i in var_hexed])
     
-        for i in range(num_of_words):
+        for i in range(var_word_count):
             index = 3 * i
-            new_word = csv[csv['Combo'] == alphahexed[index:index+3]]['Word'].values[0]
-            word_list.insert(0, new_word)
+            new_word = csv[csv['Combo'] == var_alphahexed[index:index + 3]]['Word'].values[0]
+            list_phrase.insert(0, new_word)
 
-        pass_phrase = ''.join(word_list)
+        var_passphrase = ''.join(list_phrase)
 
-        return pass_phrase
+        return var_passphrase
             
