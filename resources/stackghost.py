@@ -30,6 +30,9 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_pass = wgt_pass
         self.wgt_salt = wgt_salt
 
+        self.settings = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/order')
+
+
         self.setSizePolicy(
             qtw.QSizePolicy.Expanding,
             qtw.QSizePolicy.Fixed
@@ -88,7 +91,7 @@ class cls_stack_widget(qtw.QFrame):
             pulse_checked_color="#FF000000", # First two letters are alpha
             pulse_unchecked_color="#FF000000"
             )
-        self.wgt_toggle_type_switch.clicked.connect(self.slot_phrase_clicked)
+        self.wgt_toggle_type_switch.clicked.connect(self.func_phrase_clicked)
         lo_toggle_type.addWidget(self.wgt_toggle_type_switch)
         self.wgt_toggle_type_label = qtw.QLabel('...')
         self.wgt_toggle_type_label.setFont(var_font_small)
@@ -102,6 +105,7 @@ class cls_stack_widget(qtw.QFrame):
         # For everyone else, the mouse wheel is there to scroll the window, not screw with values.
         # There's nothing worse than trying to scroll the window and instead the mouse catches on a
         # value box for a moment and stops scrolling and starts adjusting the thing in the box instead.
+        self.wgt_size_spinbox.focusOutEvent = lambda _: self.func_save_settings()
         self.wgt_size_spinbox.setFont(var_font)
         #self.widget_size_phrase.valueChanged.connect(self.signal_update.emit)
         lo_horizontal.addWidget(self.wgt_size_spinbox)
@@ -130,7 +134,16 @@ class cls_stack_widget(qtw.QFrame):
         # self.setStyleSheet("background-color: rgba(0, 0, 0, 127);") ### TEMPORARY
 
 
-        self.initialize_values()
+        self.func_initialize_values()
+        self.func_save_settings()
+
+        qtc.QTimer.singleShot(10, lambda:
+                               self.wgt_size_spinbox.setFixedWidth(
+                               self.wgt_size_spinbox.sizeHint().width() + 12))
+        # This is clunky but it gets the job done. 12 pixels seems to be the 
+        # magic number to make the contents of the spinbox 'solid'.
+
+
 
     @pyqtSlot()
     def slot_requesting_delete(self):
@@ -142,7 +155,8 @@ class cls_stack_widget(qtw.QFrame):
         var_salt = self.wgt_salt.text()
         var_size = self.wgt_size_spinbox.value()
         var_domain = self.wgt_domain_name.text()
-        var_salt_toggle = qtc.QSettings('most_ghost', 'ghostpass').value('config/second_required')
+        var_salt_toggle = self.settings.value('--ghostconfig/second_required')
+
         if var_password == '':
             self.wgt_generated.setText('')
             self.wgt_generated.setPlaceholderText('please enter a password.')
@@ -171,40 +185,41 @@ class cls_stack_widget(qtw.QFrame):
         wgt_generated.end(False)
         wgt_generated.home(True)
 
-    @pyqtSlot()
-    def slot_phrase_clicked(self):
+    def func_phrase_clicked(self):
         self.var_global_toggle_state = self.wgt_toggle_type_switch.checkState()
         self.func_change_max_type()
-        #self.signal_update.emit()
+        self.func_save_settings()
 
     def func_change_max_type(self):
         wgt_toggle = self.wgt_toggle_type_switch
         wgt_spinbox = self.wgt_size_spinbox
         var_domain = self.wgt_domain_name.text()
-        var_secure = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_hash'))
-        var_phrase = int(qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_word'))
 
-        if var_domain != 'domain':
-            try:
-                existing_type, existing_value = qtc.QSettings('most_ghost', 'ghostpass').value(f'domains/{var_domain}').split('|')
-                if int(existing_type) == 2:
-                    var_secure = int(existing_value)
-                elif int(existing_type) == 0:
-                    var_phrase = int(existing_value)
-            except AttributeError:
-                pass
-        if wgt_toggle.checkState() == 2: # Secure
+        try:
+            if var_domain == 'domain':
+                raise TypeError # We want 'domain' to return default so we'll raise a fake error
+            var_hash = int(self.settings.value(f'{var_domain}/hash_length'))
+            var_word = int(self.settings.value(f'{var_domain}/word_length'))
+        except TypeError:
+            var_hash = int(self.settings.value('--ghostconfig/default_len_hash'))
+            var_word = int(self.settings.value('--ghostconfig/default_len_word'))
+
+
+
+        if wgt_toggle.checkState() == 2: # Secure Hash
             wgt_spinbox.setMaximum(258)
             wgt_spinbox.setMinimum(20)
-            wgt_spinbox.setValue(var_secure)
+            wgt_spinbox.setValue(var_hash)
             wgt_spinbox.setSuffix(' chars')
             self.wgt_toggle_type_label.setText('hash')
         if wgt_toggle.checkState() == 0: # Passphrase
             wgt_spinbox.setMaximum(20)
             wgt_spinbox.setMinimum(6)
-            wgt_spinbox.setValue(var_phrase)
+            wgt_spinbox.setValue(var_word)
             wgt_spinbox.setSuffix(' words')
             self.wgt_toggle_type_label.setText('passphrase')
+
+
 
 
     
@@ -212,56 +227,48 @@ class cls_stack_widget(qtw.QFrame):
         var_domain = self.wgt_domain_name.text()
         var_toggle = self.wgt_toggle_type_switch.checkState()
         var_size = self.wgt_size_spinbox.value()
-        var_default_hash = qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_hash')
-        var_default_word = qtc.QSettings('most_ghost', 'ghostpass').value('config/default_len_word')
+        var_default_hash = self.settings.value('--ghostconfig/default_len_hash')
+        var_default_word =self.settings.value('--ghostconfig/default_len_word')
 
 
-        
-        qtc.QSettings('most_ghost', 'ghostpass').setValue(f'domains/{var_domain}', f'{var_toggle}|{var_size}')
-
-        qtc.QSettings('most_ghost', 'ghostpass').setValue(f'{var_domain}/toggle_state', f'{var_toggle}')
+        self.settings.setValue(f'{var_domain}/toggle_state', f'{var_toggle}')
         
         if var_toggle == 2:
-           qtc.QSettings('most_ghost', 'ghostpass').setValue(f'{var_domain}/hash_length', f'{var_size}')
-           qtc.QSettings('most_ghost', 'ghostpass').setValue(f'{var_domain}/hash_word', f'{var_default_word}')
-        elif var_size == 0:
-           qtc.QSettings('most_ghost', 'ghostpass').setValue(f'{var_domain}/hash_length', f'{var_default_hash}')
-           qtc.QSettings('most_ghost', 'ghostpass').setValue(f'{var_domain}/hash_word', f'{var_size}')
+           self.settings.setValue(f'{var_domain}/hash_length', f'{var_size}')
+           self.settings.setValue(f'{var_domain}/word_length', f'{var_default_word}')
+        elif var_toggle == 0:
+           self.settings.setValue(f'{var_domain}/hash_length', f'{var_default_hash}')
+           self.settings.setValue(f'{var_domain}/word_length', f'{var_size}')
 
-        settings_order = qtc.QSettings('most_ghost', 'ghostpass').value('config/order')
+    def func_save_order(self):
+        var_domain = self.wgt_domain_name.text()
+        settings_order = self.settings.value('--ghostconfig/order')
         updated_order = settings_order + var_domain + '|'
-        qtc.QSettings('most_ghost', 'ghostpass').setValue(f'config/order', updated_order)
+        self.settings.setValue(f'--ghostconfig/order', updated_order)
 
-    def initialize_values(self):
+    def func_initialize_values(self):
+
+        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
 
         var_domain = self.wgt_domain_name.text()
 
-        try:
-            list_existing = qtc.QSettings('most_ghost', 'ghostpass').value('config/order').split(',')
-            list_existing = list_existing[:-1]
-        except AttributeError:
-            list_existing = []
+        var_list_domains = set()
+        temp_settings_keys = self.settings.allKeys()
+        for i in temp_settings_keys:
+            var_list_domains.add(i.split('/')[0])
 
-        if var_domain not in list_existing or var_domain == 'domain':
-            var_default = qtc.QSettings('most_ghost', 'ghostpass').value(f'config/default_type')
+        print(var_list_domains)
+
+        if var_domain in var_list_domains and var_domain != 'domain':
+            var_toggle = int(self.settings.value(f'{var_domain}/toggle_state'))
+        else:
+            var_default = self.settings.value('--ghostconfig/default_type')
             if var_default == 'hash':
                 var_toggle = 2
             elif var_default == 'word':
                 var_toggle = 0
-        else:
-            var_settings = qtc.QSettings('most_ghost', 'ghostpass').value(f'domains/{var_domain}')
-            var_settings = var_settings.split("|")
-            var_toggle = int(var_settings[0])
-
 
         self.wgt_toggle_type_switch.setCheckState(var_toggle)
-        self.var_global_toggle_state = self.wgt_toggle_type_switch.checkState()
-        if var_toggle == 2:
-            self.func_change_max_type()
-            self.wgt_toggle_type_label.setText('hash')
-            self.wgt_size_spinbox.setSuffix(' chars')
-        elif var_toggle == 0:
-            self.func_change_max_type()
-            self.wgt_toggle_type_label.setText('passphrase')
-            self.wgt_size_spinbox.setSuffix(' words')
+        self.func_phrase_clicked()
+
 

@@ -5,11 +5,11 @@ from PyQt5.QtCore import pyqtSlot
 import json
 import os
 
-dict_prefs =   {'config/pass_visible':'no', 
-                 'config/second_required': 'yes',
-                 'config/default_type': 'hash', 
-                 'config/default_len_hash': '128',
-                 'config/default_len_word': '10'}
+dict_prefs =   {'--ghostconfig/pass_visible':'no', 
+                 '--ghostconfig/second_required': 'yes',
+                 '--ghostconfig/default_type': 'hash', 
+                 '--ghostconfig/default_len_hash': '128',
+                 '--ghostconfig/default_len_word': '10'}
 # If these aren't overwritten, they'll act as our defaults
 
 class cls_popup_settings(qtw.QDialog):
@@ -32,16 +32,16 @@ class cls_popup_settings(qtw.QDialog):
 
         self.setLayout(qtw.QFormLayout())
         
-        self.wgt_pass_visible = qtw.QPushButton(dict_prefs['config/pass_visible'])
-        self.wgt_second_required = qtw.QPushButton(dict_prefs['config/second_required'])
+        self.wgt_pass_visible = qtw.QPushButton(dict_prefs['--ghostconfig/pass_visible'])
+        self.wgt_second_required = qtw.QPushButton(dict_prefs['--ghostconfig/second_required'])
         self.wgt_hashword_toggle = qtw.QComboBox()
         self.wgt_hashword_toggle.addItem("hash")
         self.wgt_hashword_toggle.addItem("word")
-        self.wgt_hashword_toggle.setCurrentText(dict_prefs['config/default_type'])
+        self.wgt_hashword_toggle.setCurrentText(dict_prefs['--ghostconfig/default_type'])
         self.wgt_hash_length = qtw.QSpinBox(maximum=256, minimum=20)
-        self.wgt_hash_length.setValue(int(dict_prefs['config/default_len_hash']))
+        self.wgt_hash_length.setValue(int(dict_prefs['--ghostconfig/default_len_hash']))
         self.wgt_word_length = qtw.QSpinBox(maximum=20, minimum=6)
-        self.wgt_word_length.setValue(int(dict_prefs['config/default_len_word']))
+        self.wgt_word_length.setValue(int(dict_prefs['--ghostconfig/default_len_word']))
 
 
         
@@ -80,31 +80,31 @@ class cls_popup_settings(qtw.QDialog):
 
     @pyqtSlot()
     def hook_up_visible_pass(self):
-        if dict_prefs['config/pass_visible'] == 'yes':
-            dict_prefs['config/pass_visible'] = 'no'
-        elif dict_prefs['config/pass_visible'] == 'no':
-            dict_prefs['config/pass_visible'] = 'yes'
-        self.wgt_pass_visible.setText(dict_prefs['config/pass_visible'])
+        if dict_prefs['--ghostconfig/pass_visible'] == 'yes':
+            dict_prefs['--ghostconfig/pass_visible'] = 'no'
+        elif dict_prefs['--ghostconfig/pass_visible'] == 'no':
+            dict_prefs['--ghostconfig/pass_visible'] = 'yes'
+        self.wgt_pass_visible.setText(dict_prefs['--ghostconfig/pass_visible'])
         
     @pyqtSlot()
     def hook_up_second_pass(self):
-        if dict_prefs['config/second_required'] == 'yes':
-            dict_prefs['config/second_required'] = 'no'
-        elif dict_prefs['config/second_required'] == 'no':
-            dict_prefs['config/second_required'] = 'yes'
-        self.wgt_second_required.setText(dict_prefs['config/second_required'])
+        if dict_prefs['--ghostconfig/second_required'] == 'yes':
+            dict_prefs['--ghostconfig/second_required'] = 'no'
+        elif dict_prefs['--ghostconfig/second_required'] == 'no':
+            dict_prefs['--ghostconfig/second_required'] = 'yes'
+        self.wgt_second_required.setText(dict_prefs['--ghostconfig/second_required'])
 
     @pyqtSlot()
     def hook_up_hash_or_word(self):
-        dict_prefs['config/default_type'] = self.wgt_hashword_toggle.currentText()
+        dict_prefs['--ghostconfig/default_type'] = self.wgt_hashword_toggle.currentText()
 
     @pyqtSlot()
     def hook_up_hash_length(self):
-        dict_prefs['config/default_len_hash'] = self.wgt_hash_length.value()
+        dict_prefs['--ghostconfig/default_len_hash'] = self.wgt_hash_length.value()
     
     @pyqtSlot()
     def hook_up_word_length(self):
-        dict_prefs['config/default_len_word'] = self.wgt_word_length.value()
+        dict_prefs['--ghostconfig/default_len_word'] = self.wgt_word_length.value()
 
     def closeEvent(self, event):
         self.sig_saved.emit()
@@ -135,7 +135,7 @@ class cls_obj_memory(qtc.QObject):
             # the main window is still populating itself.
         
         domains = []
-        order = self.settings.value('config/order')
+        order = self.settings.value('--ghostconfig/order')
         try:
             order = order[:-1].split('|')
             if type(order) != list:
@@ -163,7 +163,7 @@ class cls_obj_memory(qtc.QObject):
         print('Settings are being updated!')
         
         self.settings.clear()
-        self.settings.setValue('config/order', '')
+        self.settings.setValue('--ghostconfig/order', '')
 
         for key, value in dict_prefs.items():
             self.settings.setValue(key, value)
@@ -172,6 +172,7 @@ class cls_obj_memory(qtc.QObject):
         for i in range(var_index_count - 1):
             widget = stack_layout.itemAt(i).widget()
             widget.func_save_settings()
+            widget.func_save_order()
         # Each stack is responsible for managing its own settings. It'll also tack its name onto the 'order' setting
         # before passing it along to the next one, so we'll get a handy list of which widgets go in which order.
         

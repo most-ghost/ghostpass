@@ -27,7 +27,7 @@ class cls_main_window(qtw.QMainWindow):
 
 
         try:
-            temp_size = qtc.QSettings('most_ghost', 'ghostpass').value('config/size')
+            temp_size = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/size')
             temp_size = temp_size.split('|')
             self.resize(qtc.QSize(int(temp_size[0]),int(temp_size[1])))
             del temp_size
@@ -96,7 +96,7 @@ class cls_main_window(qtw.QMainWindow):
         wgt_gen_all.clicked.connect(self.slot_generate_all)
         wgt_gen_all.setFont(var_font_big)
         lo_pass_strip.addWidget(wgt_gen_all, 1)
-        if (qtc.QSettings('most_ghost', 'ghostpass').value('config/pass_visible')) == 'yes':
+        if (qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/pass_visible')) == 'yes':
             self.wgt_pass_edit.on_toggle_password_Action()
             self.wgt_salt_edit.on_toggle_password_Action()
 
@@ -110,6 +110,7 @@ class cls_main_window(qtw.QMainWindow):
 
         struct_scroll_widget.setWidget(struct_stack_area)
         struct_scroll_widget.setWidgetResizable(True)
+        struct_scroll_widget.setStyleSheet("QScrollArea:hover {border: none;}")
         lo_top.addWidget(struct_scroll_widget)  
 
         self.lo_scroll = qtw.QVBoxLayout(struct_stack_area)        
@@ -132,6 +133,8 @@ class cls_main_window(qtw.QMainWindow):
     def slot_add_stack(self, domain='domain'):
         wgt_pass = self.wgt_pass_edit
         wgt_salt = self.wgt_salt_edit
+        # We're passing a reference to the widget instead of the text so that we 
+        # can check the text at the time of password generation
         self.setUpdatesEnabled(False)
         # I was catching some visual glitchiness where the screen would jitter. 
         # This forces Qt to take a quick break so that it is fully updated before continuing.
@@ -183,7 +186,7 @@ class cls_main_window(qtw.QMainWindow):
     def closeEvent(self, event):
 
         self.ref_memory.func_settings_update(self.lo_scroll)
-        qtc.QSettings('most_ghost', 'ghostpass').setValue('config/size', f'{self.size().width()}|{self.size().height()}')
+        qtc.QSettings('most_ghost', 'ghostpass').setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')
         super().closeEvent(event)
     # We're overwriting Qt's own 'close' function, just so that we can tack on one last settings update.
     # Just to make extra sure we're up to date.
