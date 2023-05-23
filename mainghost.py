@@ -7,7 +7,7 @@ from PyQt5.QtCore import pyqtSlot
 import resources.qtextramods as qte
 import resources.stackghost as stackghost
 import resources.memghost as memghost
-import resources.breeze_resources as breeze
+import resources.breeze_resources
 
 
 
@@ -25,6 +25,7 @@ class cls_main_window(qtw.QMainWindow):
         self.ref_memory.sig_make_stack.connect(self.slot_add_stack)
         self.ref_memory.sig_reset.connect(self.slot_reset_scroll_area)
 
+        self.setStyleSheet("border-radius: 5px")
 
         try:
             temp_size = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/size')
@@ -196,7 +197,7 @@ class cls_main_window(qtw.QMainWindow):
 
 if __name__ == '__main__': 
     app = qtw.QApplication(sys.argv)
-    style_file = qtc.QFile(":/dark/stylesheet.qss")
+    style_file = qtc.QFile(":/dark-spooky/stylesheet.qss")
     style_file.open(qtc.QFile.ReadOnly | qtc.QFile.Text)
     stream = qtc.QTextStream(style_file)
     app.setStyleSheet(stream.readAll())

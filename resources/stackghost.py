@@ -38,8 +38,10 @@ class cls_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Fixed
         )
 
-        self.setLineWidth(2)
-        self.setFrameStyle(qtw.QFrame.Panel | qtw.QFrame.Sunken)
+        self.setLineWidth(5)
+        self.setFrameStyle(qtw.QFrame.StyledPanel | qtw.QFrame.Plain)
+
+
 
         lo_vertical = qtw.QVBoxLayout()
         self.setLayout(lo_vertical)
@@ -105,7 +107,6 @@ class cls_stack_widget(qtw.QFrame):
         # For everyone else, the mouse wheel is there to scroll the window, not screw with values.
         # There's nothing worse than trying to scroll the window and instead the mouse catches on a
         # value box for a moment and stops scrolling and starts adjusting the thing in the box instead.
-        self.wgt_size_spinbox.focusOutEvent = lambda _: self.func_save_settings()
         self.wgt_size_spinbox.setFont(var_font)
         #self.widget_size_phrase.valueChanged.connect(self.signal_update.emit)
         lo_horizontal.addWidget(self.wgt_size_spinbox)

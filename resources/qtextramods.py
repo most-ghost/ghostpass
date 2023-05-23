@@ -62,7 +62,7 @@ class Toggle(QCheckBox):
     def __init__(self,
         parent=None,
         bar_color=Qt.gray,
-        checked_color="#00B0FF",
+        checked_color="#a74bb8",
         handle_color=Qt.white,
         ):
         super().__init__(parent)
@@ -159,8 +159,8 @@ class AnimatedToggle(Toggle):
     _transparent_pen = QPen(Qt.transparent)
     _light_grey_pen = QPen(Qt.lightGray)
 
-    def __init__(self, *args, pulse_unchecked_color="#44999999",
-        pulse_checked_color="#4400B0EE", **kwargs):
+    def __init__(self, *args, pulse_unchecked_color="#a74bb8",
+        pulse_checked_color="#a74bb8", **kwargs):
 
         self._pulse_radius = 0
 
