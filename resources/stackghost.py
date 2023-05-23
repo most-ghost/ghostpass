@@ -122,18 +122,20 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_generate_button.setFont(var_font)
         lo_horizontal.addWidget(self.wgt_generate_button)
 
-        wgt_delete_button = qtw.QPushButton('-')
-        wgt_delete_button.setSizePolicy(
+        self.wgt_delete_button = qtw.QPushButton('-')
+        self.wgt_delete_button.setSizePolicy(
             qtw.QSizePolicy.Maximum,
             qtw.QSizePolicy.Maximum)
-        wgt_delete_button.clicked.connect(self.slot_requesting_delete)
-        wgt_delete_button.setFont(var_font)
-        lo_horizontal.addWidget(wgt_delete_button)
+        self.wgt_delete_button.clicked.connect(self.slot_requesting_delete)
+        self.wgt_delete_button.setFont(var_font)
+        self.wgt_delete_button.setStyleSheet("""
+        QPushButton:hover {
+            background-color: #7d0f1f;
+            border-color: #ff252b;
+            } """)
+        lo_horizontal.addWidget(self.wgt_delete_button)
 
-
-        # structure_top_strip.setStyleSheet("background-color: rgba(255, 0, 0, 0);") ### TEMPORARY
-        # self.setStyleSheet("background-color: rgba(0, 0, 0, 127);") ### TEMPORARY
-
+        self.var_delete_double_check = False
 
         self.func_initialize_values()
         self.func_save_settings()
@@ -148,7 +150,35 @@ class cls_stack_widget(qtw.QFrame):
 
     @pyqtSlot()
     def slot_requesting_delete(self):
-        self.sig_delete.emit(self)
+        if self.var_delete_double_check == True:
+            self.sig_delete.emit(self)
+        elif self.var_delete_double_check == False:
+            self.func_delete_activated()
+
+
+    def func_delete_activated(self):
+        self.var_delete_double_check = True
+        self.wgt_delete_button.setText('!')
+        self.wgt_delete_button.setStyleSheet("""
+        QPushButton:hover {
+            background-color: #d3181c;
+            border-color: #ff252b;
+            } """)
+        qtc.QTimer.singleShot(1000, self.func_delete_deactivated)
+                              
+    def func_delete_deactivated(self):
+        self.var_delete_double_check = False
+        self.wgt_delete_button.setText('-')
+        self.wgt_delete_button.setStyleSheet("""
+        QPushButton:hover {
+            background-color: #7d0f1f;
+            border-color: #ff252b;
+            } """)
+
+    
+
+
+
 
     @pyqtSlot()
     def slot_generating_pass(self):
@@ -257,8 +287,6 @@ class cls_stack_widget(qtw.QFrame):
         temp_settings_keys = self.settings.allKeys()
         for i in temp_settings_keys:
             var_list_domains.add(i.split('/')[0])
-
-        print(var_list_domains)
 
         if var_domain in var_list_domains and var_domain != 'domain':
             var_toggle = int(self.settings.value(f'{var_domain}/toggle_state'))

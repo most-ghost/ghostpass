@@ -160,7 +160,6 @@ class cls_obj_memory(qtc.QObject):
 
 
     def func_settings_update(self, stack_layout):
-        print('Settings are being updated!')
         
         self.settings.clear()
         self.settings.setValue('--ghostconfig/order', '')

@@ -62,7 +62,7 @@ class Toggle(QCheckBox):
     def __init__(self,
         parent=None,
         bar_color=Qt.gray,
-        checked_color="#a74bb8",
+        checked_color="#3e2680",
         handle_color=Qt.white,
         ):
         super().__init__(parent)
@@ -162,7 +162,7 @@ class AnimatedToggle(Toggle):
     def __init__(self, *args, pulse_unchecked_color="#a74bb8",
         pulse_checked_color="#a74bb8", **kwargs):
 
-        self._pulse_radius = 0
+        self._pulse_radius = 10
 
         super().__init__(*args, **kwargs)
 

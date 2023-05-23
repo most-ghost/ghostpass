@@ -208,9 +208,6 @@ if __name__ == '__main__':
 
 ### TO DO LIST:
 
-# Comment all of the code
+# Sort out comments
 # Thread the settings
-# Make delete work on a 2 click system
-# Domain name entry widget mucks up
 # Got to throw in an about/help section too.
-# (although perhaps instead of having that it should have a popup dialog box when you hit +)
