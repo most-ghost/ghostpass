@@ -7,7 +7,7 @@ from PyQt5.QtCore import pyqtSlot
 import resources.qtextramods as qte
 import resources.stackghost as stackghost
 import resources.memghost as memghost
-import resources.breeze_resources
+import resources.breeze_spooky
 
 
 
@@ -26,6 +26,10 @@ class cls_main_window(qtw.QMainWindow):
         self.ref_memory.sig_reset.connect(self.slot_reset_scroll_area)
 
         self.setStyleSheet("border-radius: 5px")
+
+        self.setWindowIcon(qtg.QIcon(
+            os.path.join(
+            os.path.dirname(__file__), "resources/ghosticon.svg")))
 
         try:
             temp_size = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/size')
@@ -54,13 +58,10 @@ class cls_main_window(qtw.QMainWindow):
         self.setWindowOpacity(0.98)
 
         menu_file = self.menuBar().addMenu('File')
-        menu_help = self.menuBar().addMenu('Help')
         act_import = menu_file.addAction('Import')
         act_export = menu_file.addAction('Export')
         act_prefs = menu_file.addAction('Preferences')
         act_quit = menu_file.addAction('Quit')
-        act_help = menu_help.addAction('Help')
-        act_about = menu_help.addAction('About')
 
         act_export.triggered.connect(self.ref_memory.func_export_settings)
         act_import.triggered.connect(self.ref_memory.func_import_settings)
@@ -73,9 +74,13 @@ class cls_main_window(qtw.QMainWindow):
         lo_top = qtw.QVBoxLayout(struct_top)
         self.setCentralWidget(struct_top)
 
-        wgt_logo = qtw.QLabel('ghostpass')
-        wgt_logo.setFixedHeight(80)
-        wgt_logo.setFont(var_font_big)
+        img_logo = qtg.QPixmap(
+            os.path.join(
+            os.path.dirname(__file__), "resources/ghostlogo.png"))
+        wgt_logo = qtw.QLabel()
+        wgt_logo.setPixmap(img_logo)
+        wgt_logo.setFixedHeight(200)
+        # wgt_logo.setFont(var_font_big)
         wgt_logo.setAlignment(qtc.Qt.AlignHCenter | 
                              qtc.Qt.AlignVCenter) #qtc.Qt.AlignRight 
         lo_top.addWidget(wgt_logo)
