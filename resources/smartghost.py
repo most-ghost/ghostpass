@@ -6,32 +6,16 @@ import hashlib as hlib
 import binascii as basc
 import base64 as b64
 import string as string_consts
-import cryptpandas as crp
+import pandas as pd
 
-
-import marshal
-
-path = os.path.join(os.path.dirname(__file__), "ghostkey.pyc")
-
-k = open(path, 'rb')
-k.seek(16)
-key = marshal.load(k)
-exec(key)
-var_crypt_key = crypt_gen()
-# This is really just to maintain appearances, there are multiple simple ways around this 'encryption'.
-# But that's okay. Even with access to our word dictionary, our minimum passphrase of 6 words has around
-# 28 septillion combinations, so it's tricky to brute force.
 
 class cls_obj_logic(qtc.QObject):
     def __init__(self):
         super().__init__()
 
-        var_crypt_name = os.path.join(os.path.dirname(__file__), "ghost.crypt")
-
-        self.table_dictionary = crp.read_encrypted(path=var_crypt_name, 
-            password=var_crypt_key)
-
-
+        temp_csv_path =  os.path.join(os.path.dirname(__file__), "grimoire.csv")
+        
+        self.table_dictionary = pd.read_csv(temp_csv_path)
 
     def func_hex_gen(self, var_domain, var_password, var_potential_salt):
 

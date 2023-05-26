@@ -57,11 +57,13 @@ class cls_main_window(qtw.QMainWindow):
         self.setWindowIconText('ghostpass')
         self.setWindowOpacity(0.98)
 
-        menu_file = self.menuBar().addMenu('File')
+        menu_file = self.menuBar().addMenu('System')
         act_import = menu_file.addAction('Import')
         act_export = menu_file.addAction('Export')
         act_prefs = menu_file.addAction('Preferences')
         act_quit = menu_file.addAction('Quit')
+
+
 
         act_export.triggered.connect(self.ref_memory.func_export_settings)
         act_import.triggered.connect(self.ref_memory.func_import_settings)
@@ -74,13 +76,28 @@ class cls_main_window(qtw.QMainWindow):
         lo_top = qtw.QVBoxLayout(struct_top)
         self.setCentralWidget(struct_top)
 
-        img_logo = qtg.QPixmap(
-            os.path.join(
-            os.path.dirname(__file__), "resources/ghostlogo.png"))
+
         wgt_logo = qtw.QLabel()
-        wgt_logo.setPixmap(img_logo)
-        wgt_logo.setFixedHeight(200)
-        # wgt_logo.setFont(var_font_big)
+
+        temp_logo_size = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/logo_size')
+        if temp_logo_size == 'normal':
+            img_logo = qtg.QPixmap(
+                os.path.join(
+                os.path.dirname(__file__), "resources/ghostlogo.png"))
+            wgt_logo.setPixmap(img_logo)
+            wgt_logo.setFixedHeight(200)
+        elif temp_logo_size == '2x':
+            img_logo = qtg.QPixmap(
+                os.path.join(
+                os.path.dirname(__file__), "resources/ghostdouble.png"))
+            wgt_logo.setPixmap(img_logo)
+            wgt_logo.setFixedHeight(400)
+        elif temp_logo_size == 'disabled':
+            wgt_logo.setText('ghostpass')
+            wgt_logo.setFont(var_font_big)
+            wgt_logo.setFixedHeight(35)
+        del temp_logo_size    
+
         wgt_logo.setAlignment(qtc.Qt.AlignHCenter | 
                              qtc.Qt.AlignVCenter) #qtc.Qt.AlignRight 
         lo_top.addWidget(wgt_logo)

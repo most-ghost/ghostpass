@@ -140,11 +140,7 @@ class cls_stack_widget(qtw.QFrame):
         self.func_initialize_values()
         self.func_save_settings()
 
-        qtc.QTimer.singleShot(10, lambda:
-                               self.wgt_size_spinbox.setFixedWidth(
-                               self.wgt_size_spinbox.sizeHint().width() + 12))
-        # This is clunky but it gets the job done. 12 pixels seems to be the 
-        # magic number to make the contents of the spinbox 'solid'.
+        qtc.QTimer.singleShot(10, self.func_just_slap_the_tv)
 
 
 
@@ -300,4 +296,15 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_toggle_type_switch.setCheckState(var_toggle)
         self.func_phrase_clicked()
 
+    def func_just_slap_the_tv(self):
+        self.wgt_size_spinbox.setSuffix('chars ')
+        self.wgt_size_spinbox.setMaximum(256)
+        self.wgt_size_spinbox.setValue(256)
+        self.wgt_size_spinbox.setFixedWidth(
+                self.wgt_size_spinbox.sizeHint().width() + 12)
+        self.func_change_max_type()
 
+        # I hate to say it but I'm not sure of a more elegant way to do this. I can't get the sizeHint of
+        # the largest value that would fill this box unless I actually fill the box with that value, because 
+        # it should change on every user's computer to accomodate their screen. The extra 12 pixels are to 
+        # give a little padding for the buttons at the sides of the spinbox.

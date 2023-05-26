@@ -6,6 +6,7 @@ import json
 import os
 
 dict_prefs =   {'--ghostconfig/pass_visible':'no', 
+                '--ghostconfig/logo_size':'normal',
                  '--ghostconfig/second_required': 'yes',
                  '--ghostconfig/default_type': 'hash', 
                  '--ghostconfig/default_len_hash': '128',
@@ -38,6 +39,11 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_hashword_toggle.addItem("hash")
         self.wgt_hashword_toggle.addItem("word")
         self.wgt_hashword_toggle.setCurrentText(dict_prefs['--ghostconfig/default_type'])
+        self.wgt_logo_size = qtw.QComboBox()
+        self.wgt_logo_size.addItem("disabled")
+        self.wgt_logo_size.addItem("normal")
+        self.wgt_logo_size.addItem("2x")
+        self.wgt_logo_size.setCurrentText(dict_prefs['--ghostconfig/logo_size'])
         self.wgt_hash_length = qtw.QSpinBox(maximum=256, minimum=20)
         self.wgt_hash_length.setValue(int(dict_prefs['--ghostconfig/default_len_hash']))
         self.wgt_word_length = qtw.QSpinBox(maximum=20, minimum=6)
@@ -56,6 +62,10 @@ class cls_popup_settings(qtw.QDialog):
         )
         self.layout().addRow("passwords visible by default", self.wgt_pass_visible)
         self.layout().addRow("second password required", self.wgt_second_required)
+        self.layout().addRow("ghostpass logo size*", self.wgt_logo_size)
+        self.layout().addRow(
+            qtw.QLabel('<h5>(* needs restart)</h5>'),
+        )
         self.layout().addRow(
             qtw.QLabel('<h6></h6>')
         )
@@ -75,6 +85,7 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_pass_visible.clicked.connect(self.hook_up_visible_pass)
         self.wgt_second_required.clicked.connect(self.hook_up_second_pass)
         self.wgt_hashword_toggle.currentTextChanged.connect(self.hook_up_hash_or_word)
+        self.wgt_logo_size.currentTextChanged.connect(self.hook_up_logo_size)
         self.wgt_hash_length.valueChanged.connect(self.hook_up_hash_length)
         self.wgt_word_length.valueChanged.connect(self.hook_up_word_length)
 
@@ -105,6 +116,11 @@ class cls_popup_settings(qtw.QDialog):
     @pyqtSlot()
     def hook_up_word_length(self):
         dict_prefs['--ghostconfig/default_len_word'] = self.wgt_word_length.value()
+
+    @pyqtSlot()
+    def hook_up_logo_size(self):
+        dict_prefs['--ghostconfig/logo_size'] = self.wgt_logo_size.currentText()
+
 
     def closeEvent(self, event):
         self.sig_saved.emit()
