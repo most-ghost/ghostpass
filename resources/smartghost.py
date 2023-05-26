@@ -1,6 +1,4 @@
 import os
-from PyQt5 import QtWidgets as qtw
-from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import hashlib as hlib
 import binascii as basc
@@ -10,12 +8,17 @@ import pandas as pd
 
 
 class cls_obj_logic(qtc.QObject):
+    """
+    This holds the actual password generation logic. Well really all of that is
+    actually handled by hashlib, I just piggyback off that and scramble it up a bit.
+    """
     def __init__(self):
         super().__init__()
 
         temp_csv_path =  os.path.join(os.path.dirname(__file__), "grimoire.csv")
         
         self.table_dictionary = pd.read_csv(temp_csv_path)
+        del temp_csv_path
 
     def func_hex_gen(self, var_domain, var_password, var_potential_salt):
 
@@ -38,13 +41,13 @@ class cls_obj_logic(qtc.QObject):
         double_hexed = self.func_hex_gen(var_domain, var_password + var_password, var_ + var_)
         double_hashed = b64.b85encode(double_hexed).decode("utf-8")
         extra_scrambly = scrambled1 + double_hashed[::-1] + scrambled2
-        # I added this step in later so it's a bit kludgy, but it should be fine. It'll still spit out 
-        # 256 bits worth of random.
+        # I added this step in later so maybe it's a bit kludgy, but it should be fine. It'll still spit out 
+        # 256 bits worth of random so, good enough.
 
 
         return(extra_scrambly[-var_size:])
         # [-var_size:] is just for appearances. It looks a little nicer to have new words pop in at the front,
-        # instead of tacked onto the back.
+        # instead of tacked onto the end.
 
 
     def func_pseudo_salt(self, var_ascii_password, var_potential_salt):

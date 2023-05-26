@@ -14,6 +14,9 @@ dict_prefs =   {'--ghostconfig/pass_visible':'no',
 # If these aren't overwritten, they'll act as our defaults
 
 class cls_popup_settings(qtw.QDialog):
+    """
+    This class handles the 'preferences' pop up from the system menu.
+    """
 
     sig_saved = qtc.pyqtSignal()
 
@@ -50,7 +53,7 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_word_length.setValue(int(dict_prefs['--ghostconfig/default_len_word']))
 
 
-        
+
         self.layout().addRow(
             qtw.QLabel('<h1>ghostpass</h1>')
         )
@@ -127,7 +130,13 @@ class cls_popup_settings(qtw.QDialog):
         super().closeEvent(event)
 
 
+
+
+
 class cls_obj_memory(qtc.QObject):
+    """ 
+    This holds all of our memory management logic.
+    """
 
     sig_make_stack = qtc.pyqtSignal(str)
     sig_reset = qtc.pyqtSignal()
@@ -146,9 +155,8 @@ class cls_obj_memory(qtc.QObject):
                 self.settings.setValue(key, dict_prefs[key])
 
     def func_settings_init(self):
-            # This is separated from the above because it will get loaded at the end of the main window
-            # init, after the window is populated, while the above gets loaded in at the beginning while
-            # the main window is still populating itself.
+            # This is seperated from the above as it is used to initialize our settings after the main window
+            # has been created, while the above is initialized before the main window has finished being drawn.
         
         domains = []
         order = self.settings.value('--ghostconfig/order')
@@ -159,21 +167,16 @@ class cls_obj_memory(qtc.QObject):
             if order[0] == '':
                 raise ValueError
         except (ValueError, TypeError):
-            order = ['facebook', 'google', 'twitter']
+            order = ['facebook', 'google', 'twitter'] # default domains
 
         for name in order: 
             if name in domains:
                 continue
             domains.append(name)
+        # I usually like to use sets to remove duplicates, but in this case I really want to keep the order.
+
         for name in domains:
             self.sig_make_stack.emit(name)
-        # Normally I'd use a set to remove duplicates, but in this case the whole point is to keep the 
-        # order of the widgets in the list. So this works to remove duplicates instead.
-        # What will happen with this is that the last duplicate widget will get deleted, however the settings
-        # on that widget are kept. I think this is a feature, not a bug- someone is probably adding their new domain
-        # to the bottom because they don't see it on the list above, so we want to keep those newest settings. But
-        # we don't want duplicates cluttering up the list if it's already on there.
-
 
     def func_settings_update(self, stack_layout):
         
@@ -191,7 +194,9 @@ class cls_obj_memory(qtc.QObject):
         # Each stack is responsible for managing its own settings. It'll also tack its name onto the 'order' setting
         # before passing it along to the next one, so we'll get a handy list of which widgets go in which order.
         
-        # This was probably a bad idea though. Each stack should have simply saved everything to settings immediately.
+        # This was probably a bad idea though. Each stack should have simply saved everything to settings immediately
+        # and been much simpler in design overall while its logic was managed elsewhere.
+        # Doing things this way made it more difficult when trying to implement threading.
 
     def func_export_settings(self):
 

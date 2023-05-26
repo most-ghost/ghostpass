@@ -2,15 +2,17 @@
 # that I'm using into my own file just so that I could make some minor modifications and 
 # tweaks.
 
+# Also so that I could make it use PyQt5 instead of whatever the hell old version of the library 'qtpy' refers to.
+# Less dependencies is more betterer.
+
 import os
-from qtpy import QtGui, QtWidgets
-from qtpy.QtWidgets import QCheckBox
-from qtpy.QtCore import (
+from PyQt5 import QtGui, QtWidgets
+from PyQt5.QtWidgets import QCheckBox
+from PyQt5.QtCore import (
     Qt, QSize, QPoint, QPointF, QRectF,
     QEasingCurve, QPropertyAnimation, QSequentialAnimationGroup,
-    Slot, Property)
-from qtpy.QtGui import QColor, QBrush, QPaintEvent, QPen, QPainter
-from qtpy.QtCore import Signal
+    pyqtSlot, pyqtProperty)
+from PyQt5.QtGui import QColor, QBrush, QPaintEvent, QPen, QPainter
 
 
 
@@ -125,11 +127,11 @@ class Toggle(QCheckBox):
 
         p.end()
 
-    @Slot(int)
+    @pyqtSlot(int)
     def handle_state_change(self, value):
         self._handle_position = 1 if value else 0
 
-    @Property(float)
+    @pyqtProperty(float)
     def handle_position(self):
         return self._handle_position
 
@@ -143,7 +145,7 @@ class Toggle(QCheckBox):
         self._handle_position = pos
         self.update()
 
-    @Property(float)
+    @pyqtProperty(float)
     def pulse_radius(self):
         return self._pulse_radius
 
@@ -159,8 +161,8 @@ class AnimatedToggle(Toggle):
     _transparent_pen = QPen(Qt.transparent)
     _light_grey_pen = QPen(Qt.lightGray)
 
-    def __init__(self, *args, pulse_unchecked_color="#a74bb8",
-        pulse_checked_color="#a74bb8", **kwargs):
+    def __init__(self, *args, pulse_unchecked_color="#d4d8e0",
+        pulse_checked_color="#3e2680", **kwargs):
 
         self._pulse_radius = 10
 
@@ -171,7 +173,7 @@ class AnimatedToggle(Toggle):
         self.animation.setDuration(200)  # time in ms
 
         self.pulse_anim = QPropertyAnimation(self, b"pulse_radius", self)
-        self.pulse_anim.setDuration(350)  # time in ms
+        self.pulse_anim.setDuration(50)  # time in ms
         self.pulse_anim.setStartValue(3)
         self.pulse_anim.setEndValue(8)
 
@@ -184,7 +186,7 @@ class AnimatedToggle(Toggle):
 
 
 
-    @Slot(int)
+    @pyqtSlot(int)
     def handle_state_change(self, value):
         self.animations_group.stop()
         if value:

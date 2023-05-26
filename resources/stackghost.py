@@ -9,6 +9,12 @@ import resources.smartghost as smartghost
 ref_logic = smartghost.cls_obj_logic()
 
 class cls_stack_widget(qtw.QFrame):
+    """
+    This is a custom widget that defines our 'stack', or each strip of gui that holds a domain field, 
+    the generate button, the generated password field etc. In web development this might've been called a 'div',
+    maybe that would've been a better name for it. Especially since Qt already has a 'stack' data structure.
+    Oh well!
+    """
 
     sig_delete = qtc.pyqtSignal(qtc.QObject)
     sig_update = qtc.pyqtSignal()
@@ -32,7 +38,6 @@ class cls_stack_widget(qtw.QFrame):
 
         self.settings = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/order')
 
-
         self.setSizePolicy(
             qtw.QSizePolicy.Expanding,
             qtw.QSizePolicy.Fixed
@@ -40,8 +45,6 @@ class cls_stack_widget(qtw.QFrame):
 
         self.setLineWidth(5)
         self.setFrameStyle(qtw.QFrame.StyledPanel | qtw.QFrame.Plain)
-
-
 
         lo_vertical = qtw.QVBoxLayout()
         self.setLayout(lo_vertical)
@@ -60,11 +63,7 @@ class cls_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Minimum)
         self.wgt_domain_name.editingFinished.connect(
             lambda : self.wgt_domain_name.setText(self.wgt_domain_name.text().lower()))
-        # self.wgt_domain_name.editingFinished.connect(self.sig_update.emit)
-        # This is a bit of a clunky way to force lower case, but it works without having to set a validator.
-        # Maybe there's a potential use where a user needs to have passwords for both Google and google,
-        # but I think it's more likely that having the option to mix and match, when a single letter capitalized
-        # means a totally different hash, is just going to lead to potential headaches.
+        # I don't want to give the option to mix and match upper and lower, so lower only.
         self.wgt_domain_name.setFont(var_font)
         lo_horizontal.addWidget(self.wgt_domain_name)
 
@@ -74,9 +73,11 @@ class cls_stack_widget(qtw.QFrame):
             placeholderText = ''
             )
         self.wgt_generated.mouseReleaseEvent = lambda _: self.slot_force_highlight(self.wgt_generated)
-        lo_vertical.addWidget(self.wgt_generated) 
+        lo_vertical.addWidget(self.wgt_generated)
 
-        struct_spacer = qtw.QSpacerItem(40, 20, qtw.QSizePolicy.Expanding, qtw.QSizePolicy.Minimum)
+        struct_spacer = qtw.QSpacerItem(40, 20, 
+                                        qtw.QSizePolicy.Expanding, 
+                                        qtw.QSizePolicy.Minimum)
         lo_horizontal.addSpacerItem(struct_spacer)
 
 
@@ -85,14 +86,11 @@ class cls_stack_widget(qtw.QFrame):
         struct_toggle_type.setSizePolicy(
             qtw.QSizePolicy.Fixed,
             qtw.QSizePolicy.Ignored)
-        struct_toggle_type.setFixedHeight(5)
+        struct_toggle_type.setFixedHeight(1)
         # We'll overwrite this later, but for right now I don't want the size of this section messing with
         # the calculated size of the full top strip.
         lo_toggle_type = qtw.QVBoxLayout(struct_toggle_type)
-        self.wgt_toggle_type_switch = qte.AnimatedToggle(
-            pulse_checked_color="#FF000000", # First two letters are alpha
-            pulse_unchecked_color="#FF000000"
-            )
+        self.wgt_toggle_type_switch = qte.AnimatedToggle()
         self.wgt_toggle_type_switch.clicked.connect(self.func_phrase_clicked)
         lo_toggle_type.addWidget(self.wgt_toggle_type_switch)
         self.wgt_toggle_type_label = qtw.QLabel('...')
@@ -103,19 +101,18 @@ class cls_stack_widget(qtw.QFrame):
 
         self.wgt_size_spinbox = qtw.QSpinBox()
         self.wgt_size_spinbox.wheelEvent = lambda _: None 
-        # I'm sure there are 4 or 5 people who use the mouse wheel to activate one of these. 
-        # For everyone else, the mouse wheel is there to scroll the window, not screw with values.
-        # There's nothing worse than trying to scroll the window and instead the mouse catches on a
-        # value box for a moment and stops scrolling and starts adjusting the thing in the box instead.
+        # Who uses the mouse wheel to scroll these? What a dumb feature. You're trying to scroll through
+        # your list of stuff and your mouse touches one of these boxes and instantly you stop in place
+        # and instead start messing around with some value you weren't trying to touch. Even if the item
+        # stays in place I would never use the mouse wheel to adjust a value in a spinbox. It's just an
+        # odd design concept.
         self.wgt_size_spinbox.setFont(var_font)
-        #self.widget_size_phrase.valueChanged.connect(self.signal_update.emit)
         lo_horizontal.addWidget(self.wgt_size_spinbox)
-
 
         var_dynamic_height = int(struct_top_strip.sizeHint().height())
         struct_toggle_type.setFixedHeight(var_dynamic_height)
-
-
+        # Since the height will change for each user depending on their screen configuration, this is I think the best
+        # way to set a fixed stack height that still makes sense for each user's setup.
 
         self.wgt_generate_button = qtw.QPushButton('generate')
         self.wgt_generate_button.clicked.connect(self.slot_generating_pass)
@@ -151,7 +148,6 @@ class cls_stack_widget(qtw.QFrame):
         elif self.var_delete_double_check == False:
             self.func_delete_activated()
 
-
     def func_delete_activated(self):
         self.var_delete_double_check = True
         self.wgt_delete_button.setText('!')
@@ -170,11 +166,7 @@ class cls_stack_widget(qtw.QFrame):
             background-color: #7d0f1f;
             border-color: #ff252b;
             } """)
-
-    
-
-
-
+        
 
     @pyqtSlot()
     def slot_generating_pass(self):
@@ -247,9 +239,6 @@ class cls_stack_widget(qtw.QFrame):
             self.wgt_toggle_type_label.setText('passphrase')
 
 
-
-
-    
     def func_save_settings(self):
         var_domain = self.wgt_domain_name.text()
         var_toggle = self.wgt_toggle_type_switch.checkState()
@@ -296,6 +285,7 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_toggle_type_switch.setCheckState(var_toggle)
         self.func_phrase_clicked()
 
+
     def func_just_slap_the_tv(self):
         self.wgt_size_spinbox.setSuffix('chars ')
         self.wgt_size_spinbox.setMaximum(256)
@@ -303,8 +293,7 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_size_spinbox.setFixedWidth(
                 self.wgt_size_spinbox.sizeHint().width() + 12)
         self.func_change_max_type()
-
-        # I hate to say it but I'm not sure of a more elegant way to do this. I can't get the sizeHint of
-        # the largest value that would fill this box unless I actually fill the box with that value, because 
-        # it should change on every user's computer to accomodate their screen. The extra 12 pixels are to 
-        # give a little padding for the buttons at the sides of the spinbox.
+        # I want the spinbox to be set to a fixed size which represents the largest amount of characters
+        # the spinbox might hold. This is a sloppy method but since I don't know exactly what the size hint
+        # will be on the user's screen in advance, this is one way to get it done.
+        # The extra 12 pixels are to accomodate the buttons at the sides of the spinbox, it should be enough probably.
