@@ -91,9 +91,12 @@ class cls_popup_settings(qtw.QDialog):
         del temp_font_family
         del temp_font_id
 
-        for i in range(self.layout().rowCount()):
+
+        for i in range(self.layout().count()):
             temp_row = self.layout().itemAt(i)
+            print(f'{i}, {temp_row}, {temp_row.widget()}')
             temp_row.widget().setFont(var_font)
+
 
 
 
