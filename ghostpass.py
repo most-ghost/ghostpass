@@ -46,7 +46,6 @@ class cls_main_window(qtw.QMainWindow):
         temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
         var_font_big = qtg.QFont(temp_font_family)
         var_font_big.setPointSize(18)
-        self.font = var_font_big
         del temp_font_id
         del temp_font_family
 

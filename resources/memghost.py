@@ -23,17 +23,6 @@ class cls_popup_settings(qtw.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent, modal=False)
 
-        temp_font_id = qtg.QFontDatabase.addApplicationFont(
-            os.path.join(
-            os.path.dirname(__file__), "typewcond_demi.otf"))
-        temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        var_font = qtg.QFont(temp_font_family)
-        var_font.setPointSize(15)
-        del temp_font_family
-        del temp_font_id
-
-        self.setFont(var_font)
-
         self.setLayout(qtw.QFormLayout())
         
         self.wgt_pass_visible = qtw.QPushButton(dict_prefs['--ghostconfig/pass_visible'])
@@ -77,7 +66,7 @@ class cls_popup_settings(qtw.QDialog):
         )
         self.layout().addRow("default stack type", self.wgt_hashword_toggle)
         self.layout().addRow("default character length (hash)", self.wgt_hash_length)
-        self.layout().addRow("default number of words (passphrase)      ", self.wgt_word_length)
+        self.layout().addRow("default number of words (passphrase)", self.wgt_word_length)
         self.layout().addRow(
             qtw.QLabel('<h6></h6>')
         )
@@ -91,6 +80,22 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_logo_size.currentTextChanged.connect(self.hook_up_logo_size)
         self.wgt_hash_length.valueChanged.connect(self.hook_up_hash_length)
         self.wgt_word_length.valueChanged.connect(self.hook_up_word_length)
+
+
+        temp_font_id = qtg.QFontDatabase.addApplicationFont(
+            os.path.join(
+            os.path.dirname(__file__), "typewcond_demi.otf"))
+        temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
+        var_font = qtg.QFont(temp_font_family)
+        var_font.setPointSize(15)
+        del temp_font_family
+        del temp_font_id
+
+        for i in range(self.layout().rowCount()):
+            temp_row = self.layout().itemAt(i)
+            temp_row.widget().setFont(var_font)
+
+
 
     @pyqtSlot()
     def hook_up_visible_pass(self):
