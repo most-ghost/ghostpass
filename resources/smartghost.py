@@ -60,6 +60,7 @@ class cls_obj_logic(qtc.QObject):
             obj_salt_gen.update(var_salt)
 
         var_pseudo_salt = obj_salt_gen.digest()
+        # print(b64.b64encode(var_pseudo_salt).decode("utf-8"))
 
         return var_pseudo_salt
 

@@ -219,8 +219,8 @@ class cls_stack_widget(qtw.QFrame):
         var_domain = self.wgt_domain_name.text()
 
         try:
-            if var_domain == 'app or domain':
-                raise TypeError # We want 'domain' to return default so we'll raise a fake error
+            if var_domain == 'app or site':
+                raise TypeError # We want the default to return default so we'll raise a fake error
             var_hash = int(self.settings.value(f'{var_domain}/hash_length'))
             var_word = int(self.settings.value(f'{var_domain}/word_length'))
         except TypeError:
@@ -287,7 +287,7 @@ class cls_stack_widget(qtw.QFrame):
         for i in temp_settings_keys:
             var_list_domains.add(i.split('/')[0])
 
-        if var_domain in var_list_domains and var_domain != 'app or domain':
+        if var_domain in var_list_domains and var_domain != 'app or site':
             var_toggle = int(self.settings.value(f'{var_domain}/toggle_state'))
         else:
             var_default = self.settings.value('--ghostconfig/default_type')

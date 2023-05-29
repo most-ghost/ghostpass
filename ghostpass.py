@@ -161,7 +161,7 @@ class cls_main_window(qtw.QMainWindow):
         self.show()
 
 
-    def slot_add_stack(self, domain='app or domain'):
+    def slot_add_stack(self, domain='app or site'):
         wgt_pass = self.wgt_pass_edit
         wgt_salt = self.wgt_salt_edit
         # We're passing a reference to the widget rather than only the text because we want to

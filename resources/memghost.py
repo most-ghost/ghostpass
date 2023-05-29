@@ -135,7 +135,6 @@ class cls_popup_settings(qtw.QDialog):
             dict_prefs['--ghostconfig/autoblank'] = 'yes'
         self.wgt_autoblank.setText(dict_prefs['--ghostconfig/autoblank'])
 
-
     @pyqtSlot()
     def hook_up_hash_or_word(self):
         dict_prefs['--ghostconfig/default_type'] = self.wgt_hashword_toggle.currentText()
@@ -152,6 +151,13 @@ class cls_popup_settings(qtw.QDialog):
     def hook_up_logo_size(self):
         dict_prefs['--ghostconfig/logo_size'] = self.wgt_logo_size.currentText()
 
+    def keyPressEvent(self, event):
+        event.ignore()
+        # For some reason, hitting 'enter' when adjusting a spinbox will activate a button instead.
+        # This seems to be some weird Qt bug unrelated to my code. Since we don't need the keyboard
+        # in this menu anyway, we'll just ignore it entirely.
+        # Note that this doesn't actually disable the number keys from working on the spinbox, so we're
+        # all good.
 
     def closeEvent(self, event):
         self.sig_saved.emit()
