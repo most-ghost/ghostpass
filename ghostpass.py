@@ -7,6 +7,7 @@ from PyQt5.QtCore import pyqtSlot
 import resources.qtextramods as qte
 import resources.stackghost as stackghost
 import resources.memghost as memghost
+import resources.aboutghost as aboutghost
 import resources.breeze_spooky
 
 
@@ -17,8 +18,12 @@ class cls_main_window(qtw.QMainWindow):
     password generation code is in smartghost and code related to settings management is in memghost.
     """
 
+
     def __init__(self):
         super().__init__()
+
+        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
+
 
         self.ref_memory = memghost.cls_obj_memory()
         self.ref_memory.sig_make_stack.connect(self.slot_add_stack)
@@ -31,7 +36,7 @@ class cls_main_window(qtw.QMainWindow):
             os.path.dirname(__file__), "resources/ghosticon.svg")))
 
         try:
-            temp_size = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/size')
+            temp_size = self.settings.value('--ghostconfig/size')
             temp_size = temp_size.split('|')
             self.resize(qtc.QSize(int(temp_size[0]),int(temp_size[1])))
             del temp_size
@@ -44,6 +49,8 @@ class cls_main_window(qtw.QMainWindow):
             os.path.join(
             os.path.dirname(__file__), "resources/typewcond_demi.otf"))
         temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
+        var_font = qtg.QFont(temp_font_family)
+        var_font.setPointSize(13)
         var_font_big = qtg.QFont(temp_font_family)
         var_font_big.setPointSize(18)
         del temp_font_id
@@ -51,20 +58,25 @@ class cls_main_window(qtw.QMainWindow):
 
 
         self.setWindowTitle('ghostpass')
+        self.menuBar().setFont(var_font)
         self.setWindowIconText('ghostpass')
         self.setWindowOpacity(0.98) # for that ghostly touch
 
-        menu_file = self.menuBar().addMenu('System')
-        act_import = menu_file.addAction('Import')
-        act_export = menu_file.addAction('Export')
-        act_prefs = menu_file.addAction('Preferences')
-        act_quit = menu_file.addAction('Quit')
+        menu_file = self.menuBar().addMenu('system')
+        menu_file.setFont(var_font)
+        act_import = menu_file.addAction('import')
+        act_export = menu_file.addAction('export')
+        menu_file.addSeparator()
+        act_prefs = menu_file.addAction('preferences')
+        act_about = menu_file.addAction('readme')
+        act_quit = menu_file.addAction('quit')
 
 
 
         act_export.triggered.connect(self.ref_memory.func_export_settings)
         act_import.triggered.connect(self.ref_memory.func_import_settings)
         act_prefs.triggered.connect(self.slot_show_settings)
+        act_about.triggered.connect(self.slot_show_about)
         act_quit.triggered.connect(sys.exit)
 
         struct_top = qtw.QWidget(self) 
@@ -75,7 +87,7 @@ class cls_main_window(qtw.QMainWindow):
 
         wgt_logo = qtw.QLabel()
 
-        temp_logo_size = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/logo_size')
+        temp_logo_size = self.settings.value('--ghostconfig/logo_size')
         if temp_logo_size == 'normal':
             img_logo = qtg.QPixmap(
                 os.path.join(
@@ -114,9 +126,12 @@ class cls_main_window(qtw.QMainWindow):
         wgt_gen_all.clicked.connect(self.slot_generate_all)
         wgt_gen_all.setFont(var_font_big)
         lo_pass_strip.addWidget(wgt_gen_all, 1)
-        if (qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/pass_visible')) == 'yes':
+        if (self.settings.value('--ghostconfig/pass_visible')) == 'yes':
             self.wgt_pass_edit.on_toggle_password_Action()
             self.wgt_salt_edit.on_toggle_password_Action()
+        self.wgt_pass_edit.editingFinished.connect(lambda: self.func_autoblank(self.wgt_pass_edit))
+        self.wgt_salt_edit.editingFinished.connect(lambda: self.func_autoblank(self.wgt_salt_edit))
+
 
 
         struct_scroll_widget = qtw.QScrollArea()
@@ -146,7 +161,7 @@ class cls_main_window(qtw.QMainWindow):
         self.show()
 
 
-    def slot_add_stack(self, domain='domain'):
+    def slot_add_stack(self, domain='app or domain'):
         wgt_pass = self.wgt_pass_edit
         wgt_salt = self.wgt_salt_edit
         # We're passing a reference to the widget rather than only the text because we want to
@@ -200,17 +215,25 @@ class cls_main_window(qtw.QMainWindow):
         qtc.QTimer.singleShot(4, lambda: self.setUpdatesEnabled(True))
         qtc.QTimer.singleShot(5, lambda: self.repaint())
 
-
+    @pyqtSlot()
     def slot_show_settings(self):
         popup_settings = memghost.cls_popup_settings(self)
         popup_settings.sig_saved.connect(lambda: self.ref_memory.func_settings_update(self.lo_scroll))
         popup_settings.exec()
+
+    def slot_show_about(self):
+        popup_about = aboutghost.cls_popup_about(self)
+        popup_about.exec()
+
+    def func_autoblank(self, widget):
+        if self.settings.value('--ghostconfig/autoblank') == 'yes':
+            qtc.QTimer.singleShot(60000, lambda: widget.setText(""))
+                # 60000 milliseconds = 1 minute
         
 
     def closeEvent(self, event):
-
         self.ref_memory.func_settings_update(self.lo_scroll)
-        qtc.QSettings('most_ghost', 'ghostpass').setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')
+        self.settings.setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')
         super().closeEvent(event)
     
 

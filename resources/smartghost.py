@@ -30,15 +30,16 @@ class cls_obj_logic(qtc.QObject):
         return var_hexed
 
 
-    def func_hash_gen(self, var_domain, var_password, var_size, var_):
+    def func_hash_gen(self, var_domain, var_password, var_size, var_salt):
 
-        var_hexed = self.func_hex_gen(var_domain, var_password, var_)
+        var_domain = var_domain + str(var_size) # This will change the hash every time the length is changed
+        var_hexed = self.func_hex_gen(var_domain, var_password, var_salt)
         var_hashed = b64.b85encode(var_hexed).decode("utf-8")
         scrambled1 = var_hashed[::-1][::2]
         scrambled2 = var_hashed[:96:2]
         
 
-        double_hexed = self.func_hex_gen(var_domain, var_password + var_password, var_ + var_)
+        double_hexed = self.func_hex_gen(var_domain, var_password + var_password, var_salt + var_salt)
         double_hashed = b64.b85encode(double_hexed).decode("utf-8")
         extra_scrambly = scrambled1 + double_hashed[::-1] + scrambled2
         # I added this step in later so maybe it's a bit kludgy, but it should be fine. It'll still spit out 
@@ -46,8 +47,7 @@ class cls_obj_logic(qtc.QObject):
 
 
         return(extra_scrambly[-var_size:])
-        # [-var_size:] is just for appearances. It looks a little nicer to have new words pop in at the front,
-        # instead of tacked onto the end.
+        # We'll pull backwards from the end instead of the beginning just for fun
 
 
     def func_pseudo_salt(self, var_ascii_password, var_potential_salt):
@@ -70,6 +70,7 @@ class cls_obj_logic(qtc.QObject):
         csv = self.table_dictionary
         const_alphabet = string_consts.ascii_lowercase
 
+        var_domain = var_domain + str(var_word_count) # This will change the hash every time the length is changed
         var_hexed = self.func_hex_gen(var_domain, var_password, var_salt)
         var_alphahexed = "".join([const_alphabet[i % 26] for i in var_hexed])
     
@@ -77,7 +78,9 @@ class cls_obj_logic(qtc.QObject):
             index = 3 * i
             new_word = csv[csv['Combo'] == var_alphahexed[index:index + 3]]['Word'].values[0]
             list_phrase.insert(0, new_word)
+            list_phrase.insert(1, ' ') # Put a space between each word
 
+        list_phrase.pop(-1) # Drop the last space
         var_passphrase = ''.join(list_phrase)
 
         return var_passphrase

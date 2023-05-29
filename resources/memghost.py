@@ -7,6 +7,7 @@ import os
 
 dict_prefs =   {'--ghostconfig/pass_visible':'no', 
                 '--ghostconfig/logo_size':'normal',
+                 '--ghostconfig/autoblank': 'yes',
                  '--ghostconfig/second_required': 'yes',
                  '--ghostconfig/default_type': 'hash', 
                  '--ghostconfig/default_len_hash': '128',
@@ -21,9 +22,18 @@ class cls_popup_settings(qtw.QDialog):
     sig_saved = qtc.pyqtSignal()
 
     def __init__(self, parent=None):
-        super().__init__(parent, modal=False)
+        super().__init__(modal=False)
 
         self.setLayout(qtw.QFormLayout())
+
+        self.setWindowTitle('preferences')
+
+        self.setWindowOpacity(0.98)
+
+
+        self.setWindowIcon(qtg.QIcon(
+            os.path.join(
+            os.path.dirname(__file__), "ghosticon.svg")))
         
         self.wgt_pass_visible = qtw.QPushButton(dict_prefs['--ghostconfig/pass_visible'])
         self.wgt_second_required = qtw.QPushButton(dict_prefs['--ghostconfig/second_required'])
@@ -31,6 +41,7 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_hashword_toggle.addItem("hash")
         self.wgt_hashword_toggle.addItem("word")
         self.wgt_hashword_toggle.setCurrentText(dict_prefs['--ghostconfig/default_type'])
+        self.wgt_autoblank = qtw.QPushButton(dict_prefs['--ghostconfig/autoblank'])
         self.wgt_logo_size = qtw.QComboBox()
         self.wgt_logo_size.addItem("disabled")
         self.wgt_logo_size.addItem("normal")
@@ -42,18 +53,18 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_word_length.setValue(int(dict_prefs['--ghostconfig/default_len_word']))
 
 
-
         self.layout().addRow(
-            qtw.QLabel('<h1>ghostpass</h1>')
+            qtw.QLabel('<h1>preferences</h1>')
         )
         self.layout().addRow(
             qtw.QLabel('<h6></h6>')
         )
         self.layout().addRow(
-            qtw.QLabel('<h2>app settings</h3>')
+            qtw.QLabel('<h2>app settings</h2>')
         )
         self.layout().addRow("passwords visible by default", self.wgt_pass_visible)
         self.layout().addRow("second password required", self.wgt_second_required)
+        self.layout().addRow("passwords blank after 1 minute", self.wgt_autoblank)
         self.layout().addRow("ghostpass logo size*", self.wgt_logo_size)
         self.layout().addRow(
             qtw.QLabel('<h5>(* needs restart)</h5>'),
@@ -62,7 +73,7 @@ class cls_popup_settings(qtw.QDialog):
             qtw.QLabel('<h6></h6>')
         )
         self.layout().addRow(
-            qtw.QLabel('<h2>stack settings</h3>'),
+            qtw.QLabel('<h2>stack settings</h2>'),
         )
         self.layout().addRow("default stack type", self.wgt_hashword_toggle)
         self.layout().addRow("default character length (hash)", self.wgt_hash_length)
@@ -71,11 +82,12 @@ class cls_popup_settings(qtw.QDialog):
             qtw.QLabel('<h6></h6>')
         )
 
-        self.wgt_close_button = qtw.QPushButton('Save', clicked = self.close)
+        self.wgt_close_button = qtw.QPushButton('save', clicked = self.close)
         self.layout().addRow(self.wgt_close_button)
 
         self.wgt_pass_visible.clicked.connect(self.hook_up_visible_pass)
         self.wgt_second_required.clicked.connect(self.hook_up_second_pass)
+        self.wgt_autoblank.clicked.connect(self.hook_up_autoblank)
         self.wgt_hashword_toggle.currentTextChanged.connect(self.hook_up_hash_or_word)
         self.wgt_logo_size.currentTextChanged.connect(self.hook_up_logo_size)
         self.wgt_hash_length.valueChanged.connect(self.hook_up_hash_length)
@@ -94,7 +106,6 @@ class cls_popup_settings(qtw.QDialog):
 
         for i in range(self.layout().count()):
             temp_row = self.layout().itemAt(i)
-            print(f'{i}, {temp_row}, {temp_row.widget()}')
             temp_row.widget().setFont(var_font)
 
 
@@ -115,6 +126,15 @@ class cls_popup_settings(qtw.QDialog):
         elif dict_prefs['--ghostconfig/second_required'] == 'no':
             dict_prefs['--ghostconfig/second_required'] = 'yes'
         self.wgt_second_required.setText(dict_prefs['--ghostconfig/second_required'])
+
+    @pyqtSlot()
+    def hook_up_autoblank(self):
+        if dict_prefs['--ghostconfig/autoblank'] == 'yes':
+            dict_prefs['--ghostconfig/autoblank'] = 'no'
+        elif dict_prefs['--ghostconfig/autoblank'] == 'no':
+            dict_prefs['--ghostconfig/autoblank'] = 'yes'
+        self.wgt_autoblank.setText(dict_prefs['--ghostconfig/autoblank'])
+
 
     @pyqtSlot()
     def hook_up_hash_or_word(self):
@@ -243,7 +263,8 @@ class cls_obj_memory(qtc.QObject):
             
             for key, value in settings_dict.items():
                 self.settings.setValue(key, value)
-
+                if key[:14] == "--ghostconfig/":
+                    dict_prefs[key] = value # This makes sure our running app is in sync
             
             self.sig_reset.emit()
             self.func_settings_init()

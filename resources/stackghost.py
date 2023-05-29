@@ -36,7 +36,7 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_pass = wgt_pass
         self.wgt_salt = wgt_salt
 
-        self.settings = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/order')
+        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
 
         self.setSizePolicy(
             qtw.QSizePolicy.Expanding,
@@ -61,8 +61,7 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_domain_name.setSizePolicy(
             qtw.QSizePolicy.Maximum,
             qtw.QSizePolicy.Minimum)
-        self.wgt_domain_name.editingFinished.connect(
-            lambda : self.wgt_domain_name.setText(self.wgt_domain_name.text().lower()))
+        self.wgt_domain_name.editingFinished.connect(self.slot_domain_format)
         # I don't want to give the option to mix and match upper and lower, so lower only.
         self.wgt_domain_name.setFont(var_font)
         lo_horizontal.addWidget(self.wgt_domain_name)
@@ -195,6 +194,11 @@ class cls_stack_widget(qtw.QFrame):
                 self.wgt_generated.setText(ref_logic.func_passphrase_gen(var_domain, var_password, var_size, var_salt))
             self.wgt_generated.setCursorPosition(0)
 
+        if self.settings.value('--ghostconfig/autoblank') == 'yes':
+            qtc.QTimer.singleShot(60000, lambda: self.wgt_generated.setText(""))
+                # 60000 milliseconds = 1 minute
+
+
     @pyqtSlot()
     def slot_fake_gen_click(self):
         self.wgt_generate_button.click()
@@ -215,7 +219,7 @@ class cls_stack_widget(qtw.QFrame):
         var_domain = self.wgt_domain_name.text()
 
         try:
-            if var_domain == 'domain':
+            if var_domain == 'app or domain':
                 raise TypeError # We want 'domain' to return default so we'll raise a fake error
             var_hash = int(self.settings.value(f'{var_domain}/hash_length'))
             var_word = int(self.settings.value(f'{var_domain}/word_length'))
@@ -256,6 +260,18 @@ class cls_stack_widget(qtw.QFrame):
            self.settings.setValue(f'{var_domain}/hash_length', f'{var_default_hash}')
            self.settings.setValue(f'{var_domain}/word_length', f'{var_size}')
 
+    @pyqtSlot()
+    def slot_domain_format(self):
+        domain = self.wgt_domain_name.text().lower()
+        domain = domain.replace('|', '\\')
+        domain = domain.replace('/', '\\')
+        self.wgt_domain_name.setText(domain)
+        # A) I want to get rid of | since it's used as a delimiter
+        # B) I want to get rid of / since it's used in the key itself
+        # C) I want to make sure it's always lowercase just to make consistency easier to maintain
+        # I could try to work around these but they're pretty uncommon characters so we'll just trash
+        # them instead.
+
     def func_save_order(self):
         var_domain = self.wgt_domain_name.text()
         settings_order = self.settings.value('--ghostconfig/order')
@@ -264,8 +280,6 @@ class cls_stack_widget(qtw.QFrame):
 
     def func_initialize_values(self):
 
-        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
-
         var_domain = self.wgt_domain_name.text()
 
         var_list_domains = set()
@@ -273,7 +287,7 @@ class cls_stack_widget(qtw.QFrame):
         for i in temp_settings_keys:
             var_list_domains.add(i.split('/')[0])
 
-        if var_domain in var_list_domains and var_domain != 'domain':
+        if var_domain in var_list_domains and var_domain != 'app or domain':
             var_toggle = int(self.settings.value(f'{var_domain}/toggle_state'))
         else:
             var_default = self.settings.value('--ghostconfig/default_type')
