@@ -1,5 +1,8 @@
 # ghostpass.
 
+![ghostpass](./resources/ghostdouble.png)
+
+
 Ghostpass is a password manager that generates a new password for every website domain or application that you use, based on your master password. You only need to remember one password to create dozens or hundreds of secure and unique passwords.
 
 ## Why use ghostpass?
