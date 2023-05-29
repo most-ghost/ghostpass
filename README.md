@@ -2,8 +2,6 @@
 
 Ghostpass is a password manager that generates a new password for every website domain or application that you use, based on your master password. You only need to remember one password to create dozens or hundreds of secure and unique passwords.
 
-[Skip to Installation](#install)
-
 ## Why use ghostpass?
 
 Unlike traditional password managers, which store those unique passwords in an encrypted database, ghostpass never saves any of them. Instead, it generates them on the fly, only when you need them. As long as you use the same master password, it'll always generate the same password for any given website. This approach has a couple of benefits:
@@ -61,6 +59,6 @@ Ghostpass is a password manager that generates a new password for every website 
 
 https://keepass.info/
 
-# Installation {#install}
+# Installation
 
 (Will fill this out next)
