@@ -21,6 +21,9 @@ When you enter your master password into ghostpass, it hashes it to generate a u
 
 Because ghostpass always spits out the same hash when given the same password, you can always access your accounts as long as you remember your original master password and the name of the site or app you're logging into. If you ever lose access to ghostpass, maybe due to hard drive failure, or you're on a different computer, etc- just download it again. You'll have to enter in the name of your sites again, but it'll spit out the same passwords, every time.
 
+![ghostpass demo](./resources/ghostpassdemo.png)
+
+
 # Features
 
 ## Password generation
