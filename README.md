@@ -5,12 +5,15 @@
 
 Ghostpass is a password manager that generates a new password for every website domain or application that you use, based on your master password. You only need to remember one password to create dozens or hundreds of secure and unique passwords.
 
+# Installation
+
+(Will fill this out next)
+
 ## Why use ghostpass?
 
 Unlike traditional password managers, which store those unique passwords in an encrypted database, ghostpass never saves any of them. Instead, it generates them on the fly, only when you need them. As long as you use the same master password, it'll always generate the same password for any given website. This approach has a couple of benefits:
 	* You can't forget or lose access to your decryption key, because it doesn't exist.
 	* You don't need to worry about your encrypted database being hacked or losing it or being stuck on a different computer without access to it.
-	
 	
 ## How it works
 
@@ -51,17 +54,3 @@ To prevent this type of attack, ghostpass supports salting your password. Saltin
 ## How Ghostpass Should Be Used
 
 For both optimal security and ease of use, it's recommended to keep your ghostpass settings as minimal as possible. You can change the length of each password, or toggle between passphrases and hashes, but try to avoid changing these settings too much. If you need to make changes to make a specific password work, then make changes. But otherwise, set it and forget it!
-
-Ghostpass allows you to import and export your list of domains and any associated settings. Although the save file shouldn't contain any sensitive information, it does contain the name of all of your sites, so consider renaming any sites if that is in any way an issue- ghostpass will still work just fine even if you call google 'grooble'. Note that ghostpass doesn't store your username for a given app or domain, and I can't recommend you attach it to the name of the site since that information would be kept in plain text on your system. If you want to save your username along with your password, then KeePass is a great option.
-
-## KeePass
-
-KeePass is a free, open-source password manager that offers robust features and enterprise-level security. While ghostpass is designed for simplicity, ease of use, and of course protection against losing any of your passwords, KeePass is ideal for users with more extensive needs. With KeePass, you can store both usernames and passwords in an encrypted password database. Unlike ghostpass, KeePass requires you to manage a password vault, but it provides the same level of secure password generation and more advanced features for anyone who needs them.# ghostpass.
-
-Ghostpass is a password manager that generates a new password for every website domain or application that you use, based on your master password. You only need to remember one password to create dozens or hundreds of secure and unique passwords.
-
-https://keepass.info/
-
-# Installation
-
-(Will fill this out next)
