@@ -19,7 +19,7 @@ class cls_stack_widget(qtw.QFrame):
     sig_delete = qtc.pyqtSignal(qtc.QObject)
     sig_update = qtc.pyqtSignal()
 
-    def __init__(self, wgt_pass, wgt_salt, var_domain):
+    def __init__(self, wgt_pass, wgt_salt, var_domain, var_tab):
         super().__init__()
 
         temp_font_id = qtg.QFontDatabase.addApplicationFont(
@@ -35,6 +35,7 @@ class cls_stack_widget(qtw.QFrame):
 
         self.wgt_pass = wgt_pass
         self.wgt_salt = wgt_salt
+        self.var_tab = var_tab
 
         self.settings = qtc.QSettings('most_ghost', 'ghostpass')
 
@@ -221,8 +222,8 @@ class cls_stack_widget(qtw.QFrame):
         try:
             if var_domain == 'app or site':
                 raise TypeError # We want the default to return default so we'll raise a fake error
-            var_hash = int(self.settings.value(f'{var_domain}/hash_length'))
-            var_word = int(self.settings.value(f'{var_domain}/word_length'))
+            var_hash = int(self.settings.value(f'{var_domain}_{self.var_tab}/hash_length'))
+            var_word = int(self.settings.value(f'{var_domain}_{self.var_tab}/word_length'))
         except TypeError:
             var_hash = int(self.settings.value('--ghostconfig/default_len_hash'))
             var_word = int(self.settings.value('--ghostconfig/default_len_word'))
@@ -251,32 +252,41 @@ class cls_stack_widget(qtw.QFrame):
         var_default_word =self.settings.value('--ghostconfig/default_len_word')
 
 
-        self.settings.setValue(f'{var_domain}/toggle_state', f'{var_toggle}')
+        self.settings.setValue(f'{var_domain}_{self.var_tab}/toggle_state', f'{var_toggle}')
         
         if var_toggle == 2:
-           self.settings.setValue(f'{var_domain}/hash_length', f'{var_size}')
-           self.settings.setValue(f'{var_domain}/word_length', f'{var_default_word}')
+           self.settings.setValue(f'{var_domain}_{self.var_tab}/hash_length', f'{var_size}')
+           self.settings.setValue(f'{var_domain}_{self.var_tab}/word_length', f'{var_default_word}')
         elif var_toggle == 0:
-           self.settings.setValue(f'{var_domain}/hash_length', f'{var_default_hash}')
-           self.settings.setValue(f'{var_domain}/word_length', f'{var_size}')
+           self.settings.setValue(f'{var_domain}_{self.var_tab}/hash_length', f'{var_default_hash}')
+           self.settings.setValue(f'{var_domain}_{self.var_tab}/word_length', f'{var_size}')
+
+
+    def func_save_order(self):
+        var_domain = self.wgt_domain_name.text()
+        settings_order = self.settings.value(f'--ghost_tabs/{self.var_tab}').split('|')
+        for empty in range(settings_order.count('')):
+            settings_order.remove('')
+
+        updated_order = settings_order.append(var_domain)
+        updated_order = '|' + '|'.join(settings_order) + '|'
+        self.settings.setValue(f'--ghost_tabs/{self.var_tab}', updated_order)
+
 
     @pyqtSlot()
     def slot_domain_format(self):
         domain = self.wgt_domain_name.text().lower()
         domain = domain.replace('|', '\\')
         domain = domain.replace('/', '\\')
+        domain = domain.replace('--ghost', '')
         self.wgt_domain_name.setText(domain)
         # A) I want to get rid of | since it's used as a delimiter
         # B) I want to get rid of / since it's used in the key itself
-        # C) I want to make sure it's always lowercase just to make consistency easier to maintain
+        # C) A little kludgy but I wanna stop anyone who gets cheeky
+        # D) I want to make sure it's always lowercase just to make consistency easier to maintain
         # I could try to work around these but they're pretty uncommon characters so we'll just trash
         # them instead.
 
-    def func_save_order(self):
-        var_domain = self.wgt_domain_name.text()
-        settings_order = self.settings.value('--ghostconfig/order')
-        updated_order = settings_order + var_domain + '|'
-        self.settings.setValue(f'--ghostconfig/order', updated_order)
 
     def func_initialize_values(self):
 
@@ -288,7 +298,7 @@ class cls_stack_widget(qtw.QFrame):
             var_list_domains.add(i.split('/')[0])
 
         if var_domain in var_list_domains and var_domain != 'app or site':
-            var_toggle = int(self.settings.value(f'{var_domain}/toggle_state'))
+            var_toggle = int(self.settings.value(f'{var_domain}_{self.var_tab}/toggle_state'))
         else:
             var_default = self.settings.value('--ghostconfig/default_type')
             if var_default == 'hash':

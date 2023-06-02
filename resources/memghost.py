@@ -11,8 +11,17 @@ dict_prefs =   {'--ghostconfig/pass_visible':'no',
                  '--ghostconfig/second_required': 'yes',
                  '--ghostconfig/default_type': 'hash', 
                  '--ghostconfig/default_len_hash': '128',
-                 '--ghostconfig/default_len_word': '10'}
+                 '--ghostconfig/default_len_word': '10',
+                 '--ghostconfig/tab_order' : 'general|social|hobby|entertainment|market|business',
+                 '--ghost_tabs/general' : '|google|',
+                 '--ghost_tabs/social' : '|facebook|twitter|',
+                 '--ghost_tabs/business' : '|email|',
+                 '--ghost_tabs/market' : '|amazon|ebay|',
+                 '--ghost_tabs/entertainment' : '|netflix|steam|',
+                 '--ghost_tabs/hobby' : '|reddit|'
+                 }
 # If these aren't overwritten, they'll act as our defaults
+
 
 class cls_popup_settings(qtw.QDialog):
     """
@@ -172,7 +181,7 @@ class cls_obj_memory(qtc.QObject):
     This holds all of our memory management logic.
     """
 
-    sig_make_stack = qtc.pyqtSignal(str)
+    sig_make_stack = qtc.pyqtSignal(str, str)
     sig_reset = qtc.pyqtSignal()
 
     def __init__(self):
@@ -183,7 +192,8 @@ class cls_obj_memory(qtc.QObject):
         var_existing_keys = self.settings.allKeys()
 
         for key in dict_prefs.keys():
-            if key in var_existing_keys:
+            existing = self.settings.value(key)
+            if key in var_existing_keys and existing != '': 
                 dict_prefs[key] = self.settings.value(key)
             else:
                 self.settings.setValue(key, dict_prefs[key])
@@ -191,40 +201,48 @@ class cls_obj_memory(qtc.QObject):
     def func_settings_init(self):
             # This is seperated from the above as it is used to initialize our settings after the main window
             # has been created, while the above is initialized before the main window has finished being drawn.
-        
-        domains = []
-        order = self.settings.value('--ghostconfig/order')
-        try:
-            order = order[:-1].split('|')
-            if type(order) != list:
-                raise ValueError
-            if order[0] == '':
-                raise ValueError
-        except (ValueError, TypeError):
-            order = ['facebook', 'google', 'twitter'] # default domains
+        dict_domains = {}
+        dict_domains_cleaned = {}
 
-        for name in order: 
-            if name in domains:
-                continue
-            domains.append(name)
+        self.settings.beginGroup('--ghost_tabs')
+        tabs = self.settings.childKeys()
+        self.settings.endGroup()
+
+        for tab in tabs:
+            order = self.settings.value(f'--ghost_tabs/{tab}')
+            if order == None:
+                order = []
+            else:
+                order = order[1:-1].split("|")
+            dict_domains[tab] = order
+            dict_domains_cleaned[tab] = []
+
+        for tab in dict_domains.keys():
+            for name in dict_domains[tab]: 
+                if name in dict_domains_cleaned[tab]:
+                    continue
+                dict_domains_cleaned[tab].append(name)
         # I usually like to use sets to remove duplicates, but in this case I really want to keep the order.
 
-        for name in domains:
-            self.sig_make_stack.emit(name)
+        for tab in dict_domains_cleaned.keys():
+            for name in dict_domains_cleaned[tab]:
+                self.sig_make_stack.emit(name, tab)
 
-    def func_settings_update(self, stack_layout):
+    def func_settings_update(self, dict_tabs):
         
         self.settings.clear()
-        self.settings.setValue('--ghostconfig/order', '')
 
         for key, value in dict_prefs.items():
             self.settings.setValue(key, value)
-
-        var_index_count = stack_layout.count()
-        for i in range(var_index_count - 1):
-            widget = stack_layout.itemAt(i).widget()
-            widget.func_save_settings()
-            widget.func_save_order()
+            
+        for tab in dict_tabs.keys():
+            var_index_count = dict_tabs[tab]['layout'].count()
+            self.settings.setValue(f'--ghost_tabs/{tab}', '')
+            
+            for i in range(var_index_count - 1):
+                widget = dict_tabs[tab]['layout'].itemAt(i).widget()
+                widget.func_save_settings()
+                widget.func_save_order()
         # Each stack is responsible for managing its own settings. It'll also tack its name onto the 'order' setting
         # before passing it along to the next one, so we'll get a handy list of which widgets go in which order.
         

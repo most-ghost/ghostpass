@@ -22,8 +22,9 @@ class cls_main_window(qtw.QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
+        ### GENERAL WINDOW SETTINGS AND INIT
 
+        self.settings = qtc.QSettings('most_ghost', 'ghostpass')
 
         self.ref_memory = memghost.cls_obj_memory()
         self.ref_memory.sig_make_stack.connect(self.slot_add_stack)
@@ -44,7 +45,6 @@ class cls_main_window(qtw.QMainWindow):
             self.resize(qtc.QSize(600, 900)) # Default size if no settings are found
         self.setMinimumSize(qtc.QSize(600, 400))
 
-
         temp_font_id = qtg.QFontDatabase.addApplicationFont(
             os.path.join(
             os.path.dirname(__file__), "resources/typewcond_demi.otf"))
@@ -56,11 +56,12 @@ class cls_main_window(qtw.QMainWindow):
         del temp_font_id
         del temp_font_family
 
-
         self.setWindowTitle('ghostpass')
         self.menuBar().setFont(var_font)
         self.setWindowIconText('ghostpass')
         self.setWindowOpacity(0.98) # for that ghostly touch
+
+        ### TOP MENU
 
         menu_file = self.menuBar().addMenu('system')
         menu_file.setFont(var_font)
@@ -71,13 +72,13 @@ class cls_main_window(qtw.QMainWindow):
         act_about = menu_file.addAction('readme')
         act_quit = menu_file.addAction('quit')
 
-
-
         act_export.triggered.connect(self.ref_memory.func_export_settings)
         act_import.triggered.connect(self.ref_memory.func_import_settings)
         act_prefs.triggered.connect(self.slot_show_settings)
         act_about.triggered.connect(self.slot_show_about)
         act_quit.triggered.connect(sys.exit)
+
+        ### MAIN WIDGET - TOP LEVEL
 
         struct_top = qtw.QWidget(self) 
         # 'Structures' are my name for top level widgets that hold other widgets but aren't actually used.
@@ -86,31 +87,14 @@ class cls_main_window(qtw.QMainWindow):
         self.setCentralWidget(struct_top)
 
         wgt_logo = qtw.QLabel()
-
-        temp_logo_size = self.settings.value('--ghostconfig/logo_size')
-        if temp_logo_size == 'normal':
-            img_logo = qtg.QPixmap(
-                os.path.join(
-                os.path.dirname(__file__), "resources/ghostlogo.png"))
-            wgt_logo.setPixmap(img_logo)
-            wgt_logo.setFixedHeight(200)
-        elif temp_logo_size == '2x':
-            img_logo = qtg.QPixmap(
-                os.path.join(
-                os.path.dirname(__file__), "resources/ghostdouble.png"))
-            wgt_logo.setPixmap(img_logo)
-            wgt_logo.setFixedHeight(400)
-        elif temp_logo_size == 'disabled':
-            wgt_logo.setText('ghostpass')
-            wgt_logo.setFont(var_font_big)
-            wgt_logo.setFixedHeight(35)
-        del temp_logo_size
-
+        self.func_set_logo_size(wgt_logo, var_font_big)
         wgt_logo.setAlignment(qtc.Qt.AlignHCenter | 
                              qtc.Qt.AlignVCenter)
         lo_top.addWidget(wgt_logo)
 
-        struct_pass_strip = qtw.QWidget() # 'pass strip' as in the strip of gui that holds both password fields
+        ### MAIN WIDGET - PASSWORD STRIP
+
+        struct_pass_strip = qtw.QWidget()
         lo_pass_strip = qtw.QHBoxLayout(struct_pass_strip)
         lo_top.addWidget(struct_pass_strip)
 
@@ -132,48 +116,61 @@ class cls_main_window(qtw.QMainWindow):
         self.wgt_pass_edit.editingFinished.connect(lambda: self.func_autoblank(self.wgt_pass_edit))
         self.wgt_salt_edit.editingFinished.connect(lambda: self.func_autoblank(self.wgt_salt_edit))
 
+        ### MAIN WINDOW - STACK AREA - TABS AND STACKS
+
+        self.struct_tab_widget = qtw.QTabWidget()
+        self.struct_tab_widget.setFont(var_font)
+        self.struct_tab_widget.setStyleSheet("""
+            QTabWidget::pane {border-left: 5px solid #3e2680;
+                              border-right: 0px;
+                              border-bottom: 0px;
+                              border-top: 5px solid #3e2680;
+                              border-top-left-radius: 15px;
+                              }
+            QTabWidget::tab-bar {top: 15px;}
+            QTabBar::tab {background-color: #0e0d0a; 
+                          color: #d4d8e0;
+                          padding: 10px;
+                          border: 0px none} 
+            QTabBar::tab:selected {background-color: #3e2680;
+                                   color: #d4d8e0; 
+                                   border-color: #9B9B9B;
+                                   border-bottom-color: #d4d8e0; }
+            """)
+        self.struct_tab_widget.setTabPosition(qtw.QTabWidget.West)
+        self.struct_tab_widget.setMovable(True)
+
+        self.func_fill_tab_dict(var_font_big)
+        for tab in self.dict_tabs:
+            self.struct_tab_widget.addTab(self.dict_tabs[tab]['struct'], tab)
+        lo_top.addWidget(self.struct_tab_widget)
 
 
-        struct_scroll_widget = qtw.QScrollArea()
-        struct_stack_area = qtw.QWidget()
-        struct_stack_area.setSizePolicy(
-            qtw.QSizePolicy.Expanding,
-            qtw.QSizePolicy.Fixed
-        )
-
-        struct_scroll_widget.setWidget(struct_stack_area)
-        struct_scroll_widget.setWidgetResizable(True)
-        struct_scroll_widget.setStyleSheet("QScrollArea:hover {border: none;}")
-        lo_top.addWidget(struct_scroll_widget)  
-
-        self.lo_scroll = qtw.QVBoxLayout(struct_stack_area)
-
-        wgt_add_stack = qtw.QPushButton('+')
-        wgt_add_stack.setFont(var_font_big)
-        wgt_add_stack.clicked.connect(
-            lambda: self.slot_add_stack() ) 
-        # We hide this behind a lambda instead of connecting it directly because 
-        # the 'clicked' event attaches a bool to the sending signal otherwise.
-        self.lo_scroll.addWidget(wgt_add_stack)
 
         self.ref_memory.func_settings_init()
 
         self.show()
 
 
-    def slot_add_stack(self, domain='app or site'):
+    def slot_add_stack(self, domain='app or site', tab=''):
         wgt_pass = self.wgt_pass_edit
         wgt_salt = self.wgt_salt_edit
+        if tab == '':
+            tab = self.struct_tab_widget.tabText(self.struct_tab_widget.currentIndex())
+        if domain == '':
+            domain = 'app or site'
+        scroll_layout = self.dict_tabs[tab]['layout']
+
         # We're passing a reference to the widget rather than only the text because we want to
         # check the text later on, immediately before generating a password
         
         self.setUpdatesEnabled(False)
 
-        wgt_stack = stackghost.cls_stack_widget(wgt_pass, wgt_salt, domain)
+        wgt_stack = stackghost.cls_stack_widget(wgt_pass, wgt_salt, domain, tab)
         wgt_stack.sig_delete.connect(lambda: self.slot_remove_stack(wgt_stack))
-        wgt_stack.sig_update.connect(lambda: self.ref_memory.func_settings_update(self.lo_scroll))
+        wgt_stack.sig_update.connect(lambda: self.ref_memory.func_settings_update(self.dict_tabs))
 
-        self.lo_scroll.insertWidget(self.lo_scroll.count() - 1, wgt_stack)
+        scroll_layout.insertWidget(scroll_layout.count() - 1, wgt_stack)
         
         qtc.QTimer.singleShot(1, lambda: self.setUpdatesEnabled(True))
         qtc.QTimer.singleShot(2, lambda: self.repaint())
@@ -218,7 +215,8 @@ class cls_main_window(qtw.QMainWindow):
     @pyqtSlot()
     def slot_show_settings(self):
         popup_settings = memghost.cls_popup_settings(self)
-        popup_settings.sig_saved.connect(lambda: self.ref_memory.func_settings_update(self.lo_scroll))
+        for tab in self.dict_tabs.keys():
+            popup_settings.sig_saved.connect(lambda: self.ref_memory.func_settings_update(self.dict_tabs))
         popup_settings.exec()
 
     def slot_show_about(self):
@@ -230,10 +228,62 @@ class cls_main_window(qtw.QMainWindow):
             qtc.QTimer.singleShot(60000, lambda: widget.setText(""))
                 # 60000 milliseconds = 1 minute
         
+    def func_set_logo_size(self, logo, font):
+        temp_logo_size = self.settings.value('--ghostconfig/logo_size')
+        if temp_logo_size == 'normal':
+            img_logo = qtg.QPixmap(
+                os.path.join(
+                os.path.dirname(__file__), "resources/ghostlogo.png"))
+            logo.setPixmap(img_logo)
+            logo.setFixedHeight(200)
+        elif temp_logo_size == '2x':
+            img_logo = qtg.QPixmap(
+                os.path.join(
+                os.path.dirname(__file__), "resources/ghostdouble.png"))
+            logo.setPixmap(img_logo)
+            logo.setFixedHeight(400)
+        elif temp_logo_size == 'disabled':
+            logo.setText('ghostpass')
+            logo.setFont(font)
+            logo.setFixedHeight(35)
+
+    def func_fill_tab_dict(self, font):
+        tab_list = self.settings.value('--ghostconfig/tab_order').split('|')
+        self.dict_tabs = {tab:{'struct': qtw.QScrollArea(), # 0 This is the struct that holds everything
+                               'list': qtw.QWidget(), # 1 Widget that contains the tabs
+                               'layout': qtw.QVBoxLayout(), # 2 Layout for above widget
+                               '+': qtw.QPushButton('+') # 3 '+' add button
+                               }  for tab in tab_list}
+        
+        for tab in self.dict_tabs.keys():
+            self.dict_tabs[tab]['list'].setSizePolicy(
+            qtw.QSizePolicy.Expanding,
+            qtw.QSizePolicy.Fixed
+            )
+
+            self.dict_tabs[tab]['struct'].setWidget(self.dict_tabs[tab]['list'])
+            self.dict_tabs[tab]['struct'].setWidgetResizable(True)
+            self.dict_tabs[tab]['struct'].setStyleSheet("QScrollArea:hover {border: none;}")
+
+            self.dict_tabs[tab]['list'].setLayout(self.dict_tabs[tab]['layout'])
+
+            self.dict_tabs[tab]['+'].setFont(font)
+
+            self.dict_tabs[tab]['+'].clicked.connect(
+                lambda: self.slot_add_stack() )
+            
+            self.dict_tabs[tab]['layout'].addWidget(self.dict_tabs[tab]['+'])
+
+            
 
     def closeEvent(self, event):
-        self.ref_memory.func_settings_update(self.lo_scroll)
+        for tab in self.dict_tabs.keys():
+            self.ref_memory.func_settings_update(self.dict_tabs)
         self.settings.setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')
+        self.settings.setValue('--ghostconfig/tab_order', 
+                               '|'.join(
+            [self.struct_tab_widget.tabText(i) for i in range( self.struct_tab_widget.count() ) ]
+                              ))
         super().closeEvent(event)
     
 
