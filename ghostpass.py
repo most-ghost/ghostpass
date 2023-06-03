@@ -49,22 +49,22 @@ class cls_main_window(qtw.QMainWindow):
             os.path.join(
             os.path.dirname(__file__), "resources/typewcond_demi.otf"))
         temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        var_font = qtg.QFont(temp_font_family)
-        var_font.setPointSize(13)
-        var_font_big = qtg.QFont(temp_font_family)
-        var_font_big.setPointSize(18)
+        self.var_font = qtg.QFont(temp_font_family)
+        self.var_font.setPointSize(13)
+        self.var_font_big = qtg.QFont(temp_font_family)
+        self.var_font_big.setPointSize(18)
         del temp_font_id
         del temp_font_family
 
         self.setWindowTitle('ghostpass')
-        self.menuBar().setFont(var_font)
+        self.menuBar().setFont(self.var_font)
         self.setWindowIconText('ghostpass')
         self.setWindowOpacity(0.98) # for that ghostly touch
 
         ### TOP MENU
 
         menu_file = self.menuBar().addMenu('system')
-        menu_file.setFont(var_font)
+        menu_file.setFont(self.var_font)
         act_import = menu_file.addAction('import')
         act_export = menu_file.addAction('export')
         menu_file.addSeparator()
@@ -87,7 +87,7 @@ class cls_main_window(qtw.QMainWindow):
         self.setCentralWidget(struct_top)
 
         wgt_logo = qtw.QLabel()
-        self.func_set_logo_size(wgt_logo, var_font_big)
+        self.func_set_logo_size(wgt_logo, self.var_font_big)
         wgt_logo.setAlignment(qtc.Qt.AlignHCenter | 
                              qtc.Qt.AlignVCenter)
         lo_top.addWidget(wgt_logo)
@@ -100,15 +100,15 @@ class cls_main_window(qtw.QMainWindow):
 
         self.wgt_pass_edit = qte.PasswordEdit()
         self.wgt_pass_edit.setPlaceholderText('password')
-        self.wgt_pass_edit.setFont(var_font_big)
+        self.wgt_pass_edit.setFont(self.var_font_big)
         lo_pass_strip.addWidget(self.wgt_pass_edit, 2)
         self.wgt_salt_edit = qte.PasswordEdit()
         self.wgt_salt_edit.setPlaceholderText('double pass')
-        self.wgt_salt_edit.setFont(var_font_big)
+        self.wgt_salt_edit.setFont(self.var_font_big)
         lo_pass_strip.addWidget(self.wgt_salt_edit, 1)
         wgt_gen_all = qtw.QPushButton('generate all')
         wgt_gen_all.clicked.connect(self.slot_generate_all)
-        wgt_gen_all.setFont(var_font_big)
+        wgt_gen_all.setFont(self.var_font_big)
         lo_pass_strip.addWidget(wgt_gen_all, 1)
         if (self.settings.value('--ghostconfig/pass_visible')) == 'yes':
             self.wgt_pass_edit.on_toggle_password_Action()
@@ -119,12 +119,11 @@ class cls_main_window(qtw.QMainWindow):
         ### MAIN WINDOW - STACK AREA - TABS AND STACKS
 
         self.struct_tab_widget = qtw.QTabWidget()
-        self.struct_tab_widget.setFont(var_font)
+        self.struct_tab_widget.setFont(self.var_font)
         self.struct_tab_widget.setStyleSheet("""
-            QTabWidget::pane {border-left: 5px solid #3e2680;
+            QTabWidget::pane {border: 5px solid #3e2680;
                               border-right: 0px;
                               border-bottom: 0px;
-                              border-top: 5px solid #3e2680;
                               border-top-left-radius: 15px;
                               }
             QTabWidget::tab-bar {top: 15px;}
@@ -140,12 +139,8 @@ class cls_main_window(qtw.QMainWindow):
         self.struct_tab_widget.setTabPosition(qtw.QTabWidget.West)
         self.struct_tab_widget.setMovable(True)
 
-        self.func_fill_tab_dict(var_font_big)
-        for tab in self.dict_tabs:
-            self.struct_tab_widget.addTab(self.dict_tabs[tab]['struct'], tab)
+        self.func_fill_tab_dict(self.var_font_big)
         lo_top.addWidget(self.struct_tab_widget)
-
-
 
         self.ref_memory.func_settings_init()
 
@@ -188,11 +183,13 @@ class cls_main_window(qtw.QMainWindow):
 
     @pyqtSlot()
     def slot_generate_all(self):
-        
-        temp_index = self.lo_scroll.count()
+
+        tab = self.struct_tab_widget.tabText(self.struct_tab_widget.currentIndex())
+
+        temp_index = self.dict_tabs[tab]['layout'].count()
 
         for count in range(temp_index - 1): # -1 because there's a '+' button widget at the very end
-            widget = self.lo_scroll.itemAt(count).widget()
+            widget = self.dict_tabs[tab]['layout'].itemAt(count).widget()
             widget.slot_fake_gen_click()
             qtw.QApplication.processEvents()
             # 'Process Events' ensures that Qt will stop and update whenever it has generated a password,
@@ -204,19 +201,24 @@ class cls_main_window(qtw.QMainWindow):
     def slot_reset_scroll_area(self):
         self.setUpdatesEnabled(False)
 
-        temp_index = self.lo_scroll.count()
-        for count in range(temp_index - 1):
-            widget = self.lo_scroll.itemAt(count).widget()
-            widget.deleteLater()
+        for tab in self.dict_tabs.keys():
+            temp_index = self.dict_tabs[tab]['layout'].count()
+            for count in range(temp_index - 1):
+                for count in range(temp_index - 1):
+                    widget = self.dict_tabs[tab]['layout'].itemAt(count).widget()
+                    widget.deleteLater()
         
         qtc.QTimer.singleShot(4, lambda: self.setUpdatesEnabled(True))
-        qtc.QTimer.singleShot(5, lambda: self.repaint())
+        qtc.QTimer.singleShot(10, lambda: self.repaint())
 
     @pyqtSlot()
     def slot_show_settings(self):
         popup_settings = memghost.cls_popup_settings(self)
         for tab in self.dict_tabs.keys():
             popup_settings.sig_saved.connect(lambda: self.ref_memory.func_settings_update(self.dict_tabs))
+        popup_settings.sig_add_tab.connect(self.hook_up_add_tab)
+        popup_settings.sig_delete_tab.connect(self.hook_up_delete_tab)
+        popup_settings.sig_rename_tab.connect(self.hook_up_rename_tab)
         popup_settings.exec()
 
     def slot_show_about(self):
@@ -274,16 +276,102 @@ class cls_main_window(qtw.QMainWindow):
             
             self.dict_tabs[tab]['layout'].addWidget(self.dict_tabs[tab]['+'])
 
-            
+        for tab in self.dict_tabs:
+            self.struct_tab_widget.addTab(self.dict_tabs[tab]['struct'], tab)
+
+
+    def func_update_tab_order(self):
+        self.settings.setValue('--ghostconfig/tab_order', 
+                               '|'.join(
+            [self.struct_tab_widget.tabText(i) for i in range( self.struct_tab_widget.count() ) ]
+                              ))
+        
+
+    def hook_up_add_tab(self, tab_name):
+        self.func_update_tab_order()
+        self.ref_memory.func_settings_update(self.dict_tabs)
+        
+        old_tabs = self.settings.value('--ghostconfig/tab_order')
+        new_tabs = old_tabs + '|' + tab_name
+        self.settings.setValue('--ghostconfig/tab_order', new_tabs)
+
+        self.struct_tab_widget.clear()
+        self.dict_tabs = {}
+        self.func_fill_tab_dict(self.var_font)
+        self.ref_memory.func_settings_init()
+        self.func_update_tab_order()
+
+
+    def hook_up_delete_tab(self, tab_name):
+        if tab_name in self.dict_tabs.keys():
+            self.settings.beginGroup('--ghost_tabs')
+            self.settings.remove(tab_name)
+            self.settings.endGroup()
+
+            order = self.settings.value('--ghostconfig/tab_order').split('|')
+            order.pop(order.index(tab_name))
+            self.settings.setValue('--ghostconfig/tab_order', '|'.join(order))
+
+            to_delete = [x for x in self.settings.childGroups() if x.split('_')[-1] == tab_name]
+            for group in to_delete:
+                self.settings.beginGroup(group)
+                for key in group:
+                    self.settings.remove(key)
+                self.settings.endGroup()
+                self.settings.remove(group)
+
+        self.struct_tab_widget.clear()
+        self.dict_tabs = {}
+        self.func_fill_tab_dict(self.var_font)
+        self.ref_memory.func_settings_init()
+        self.func_update_tab_order()
+
+
+    def hook_up_rename_tab(self, new_tab, old_tab):
+        old_value = self.settings.value(f'--ghost_tabs/{old_tab}')
+        self.settings.beginGroup('--ghost_tabs')
+        self.settings.setValue(new_tab, old_value)
+        self.settings.remove(old_tab)
+        self.settings.endGroup()
+
+        order = self.settings.value('--ghostconfig/tab_order').split('|')
+        index = order.index(old_tab)
+        order.pop(index)
+        order.insert(index, new_tab)
+        self.settings.setValue('--ghostconfig/tab_order', '|'.join(order))
+
+        to_change = [x for x in self.settings.childGroups() if x.split('_')[-1] == old_tab]
+        for group in to_change:
+            self.settings.beginGroup(group)
+            old_values = {key: self.settings.value(key) for key in self.settings.childKeys()}
+            for key in group:
+                self.settings.remove(key)
+            self.settings.endGroup()
+            self.settings.remove(group)
+
+            new_group = group.split('_')[:-1]
+            new_group.append(new_tab)
+            new_group = "_".join(new_group)
+
+            self.settings.beginGroup(new_group)
+            for key, value in old_values.items():
+                self.settings.setValue(key, value)
+            self.settings.endGroup()
+
+        self.struct_tab_widget.clear()
+        self.dict_tabs = {}
+        self.func_fill_tab_dict(self.var_font)
+        self.ref_memory.func_settings_init()
+        self.func_update_tab_order()
+      
+
+        
 
     def closeEvent(self, event):
         for tab in self.dict_tabs.keys():
             self.ref_memory.func_settings_update(self.dict_tabs)
         self.settings.setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')
-        self.settings.setValue('--ghostconfig/tab_order', 
-                               '|'.join(
-            [self.struct_tab_widget.tabText(i) for i in range( self.struct_tab_widget.count() ) ]
-                              ))
+        self.func_update_tab_order()
         super().closeEvent(event)
     
 

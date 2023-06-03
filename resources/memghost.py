@@ -29,6 +29,9 @@ class cls_popup_settings(qtw.QDialog):
     """
 
     sig_saved = qtc.pyqtSignal()
+    sig_add_tab = qtc.pyqtSignal(str)
+    sig_delete_tab = qtc.pyqtSignal(str)
+    sig_rename_tab = qtc.pyqtSignal(str, str)
 
     def __init__(self, parent=None):
         super().__init__(modal=False)
@@ -60,6 +63,11 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_hash_length.setValue(int(dict_prefs['--ghostconfig/default_len_hash']))
         self.wgt_word_length = qtw.QSpinBox(maximum=20, minimum=6)
         self.wgt_word_length.setValue(int(dict_prefs['--ghostconfig/default_len_word']))
+        self.wgt_add_category = qtw.QPushButton('create')
+        self.wgt_rem_category = qtw.QPushButton('remove')
+        self.wgt_mod_category = qtw.QPushButton('modify')
+
+
 
 
         self.layout().addRow(
@@ -90,6 +98,13 @@ class cls_popup_settings(qtw.QDialog):
         self.layout().addRow(
             qtw.QLabel('<h6></h6>')
         )
+        self.layout().addRow(
+            qtw.QLabel('<h2>category settings</h2>'),
+        )
+        self.layout().addRow("add new category", self.wgt_add_category)
+        self.layout().addRow("delete category", self.wgt_rem_category)
+        self.layout().addRow("rename category", self.wgt_mod_category)
+
 
         self.wgt_close_button = qtw.QPushButton('save', clicked = self.close)
         self.layout().addRow(self.wgt_close_button)
@@ -101,21 +116,25 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_logo_size.currentTextChanged.connect(self.hook_up_logo_size)
         self.wgt_hash_length.valueChanged.connect(self.hook_up_hash_length)
         self.wgt_word_length.valueChanged.connect(self.hook_up_word_length)
+        self.wgt_add_category.clicked.connect(self.hook_up_add_cat)
+        self.wgt_rem_category.clicked.connect(self.hook_up_del_cat)
+        self.wgt_mod_category.clicked.connect(self.hook_up_mod_cat)
+
 
 
         temp_font_id = qtg.QFontDatabase.addApplicationFont(
             os.path.join(
             os.path.dirname(__file__), "typewcond_demi.otf"))
         temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        var_font = qtg.QFont(temp_font_family)
-        var_font.setPointSize(15)
+        self.var_font = qtg.QFont(temp_font_family)
+        self.var_font.setPointSize(15)
         del temp_font_family
         del temp_font_id
 
 
         for i in range(self.layout().count()):
             temp_row = self.layout().itemAt(i)
-            temp_row.widget().setFont(var_font)
+            temp_row.widget().setFont(self.var_font)
 
 
 
@@ -160,6 +179,46 @@ class cls_popup_settings(qtw.QDialog):
     def hook_up_logo_size(self):
         dict_prefs['--ghostconfig/logo_size'] = self.wgt_logo_size.currentText()
 
+    @pyqtSlot()
+    def hook_up_add_cat(self):
+        popup_add_cat = cls_popup_category(
+            'add category', 
+            'please enter the name of your new category', 
+            self.var_font, 
+            )
+
+        if popup_add_cat.exec() == qtw.QDialog.Accepted:
+            new_tab = popup_add_cat.get_results()
+            self.sig_add_tab.emit(new_tab.lower())
+
+    def hook_up_del_cat(self):
+
+        popup_del_cat = cls_popup_category(
+            'delete category', 
+            'this is permanent! deleting a category will delete \nthe whole list inside of it too', 
+            self.var_font, 
+            line_text="if you're sure, type the name in here"
+            )
+
+        if popup_del_cat.exec() == qtw.QDialog.Accepted:
+            del_tab = popup_del_cat.get_results()
+            self.sig_delete_tab.emit(del_tab.lower())
+
+    def hook_up_mod_cat(self):
+
+        popup_del_cat = cls_popup_category(
+            'rename category', 
+            'please select your category, \nand then enter the new name \nin the space below', 
+            self.var_font,
+            category_list=True
+            )
+
+        if popup_del_cat.exec() == qtw.QDialog.Accepted:
+            del_tab, old_tab = popup_del_cat.get_results()
+            self.sig_rename_tab.emit(del_tab.lower(), old_tab)
+
+            
+
     def keyPressEvent(self, event):
         event.ignore()
         # For some reason, hitting 'enter' when adjusting a spinbox will activate a button instead.
@@ -172,6 +231,68 @@ class cls_popup_settings(qtw.QDialog):
         self.sig_saved.emit()
         super().closeEvent(event)
 
+
+
+
+class cls_popup_category(qtw.QDialog):
+
+    def __init__(self, window_title, label_main, font, line_text = '', category_list = False, parent=None):
+        super().__init__(parent)
+        font.setPointSize(17)
+        self.category_list = category_list
+
+        self.setWindowTitle(window_title)
+        self.setWindowIcon(qtg.QIcon(
+            os.path.join(
+            os.path.dirname(__file__), "ghosticon.svg")))
+        self.setWindowOpacity(0.98)    
+
+        lo_popup = qtw.QVBoxLayout(self)
+
+        self.setLayout(lo_popup)
+
+        wgt_label_main = qtw.QLabel(label_main)
+        self.wgt_text_edit = qtw.QLineEdit()
+        self.wgt_text_edit.setPlaceholderText(line_text)
+        self.wgt_buttons = qtw.QDialogButtonBox(qtw.QDialogButtonBox.Ok | qtw.QDialogButtonBox.Cancel)
+        
+
+        lo_popup.addWidget(wgt_label_main)
+        if category_list == True:
+            self.wgt_list = qtw.QListWidget()
+            categories = qtc.QSettings('most_ghost', 'ghostpass').value('--ghostconfig/tab_order').split('|')
+            for tab in categories:
+                self.wgt_list.addItem(tab)
+            lo_popup.addWidget(self.wgt_list)
+        lo_popup.addWidget(self.wgt_text_edit)
+        lo_popup.addWidget(self.wgt_buttons)        
+
+        for i in range(lo_popup.count()):
+            item = lo_popup.itemAt(i)
+            item.widget().setFont(font)
+
+        self.wgt_buttons.accepted.connect(self.accept)
+        self.wgt_buttons.rejected.connect(self.reject)
+
+    def get_results(self):
+        returnable = str(self.wgt_text_edit.text())
+        returnable = returnable.replace('_', '')
+        returnable = returnable.replace('|', '')
+        returnable = returnable.replace('/', '')
+
+        if self.category_list == True:
+            return (returnable, self.wgt_list.currentItem().text())
+        else:
+            return returnable
+        
+    def accept(self):
+        super().accept()
+        
+    def reject(self):
+        super().reject()
+
+
+        
 
 
 
@@ -204,11 +325,15 @@ class cls_obj_memory(qtc.QObject):
         dict_domains = {}
         dict_domains_cleaned = {}
 
-        self.settings.beginGroup('--ghost_tabs')
-        tabs = self.settings.childKeys()
-        self.settings.endGroup()
-
-        for tab in tabs:
+        list_tabs = self.settings.value('--ghostconfig/tab_order').split('|')
+        list_tabs_cleaned = []
+        for tab in list_tabs:
+            if tab in list_tabs_cleaned:
+                continue
+            else:
+                list_tabs_cleaned.append(tab)
+        
+        for tab in list_tabs_cleaned:
             order = self.settings.value(f'--ghost_tabs/{tab}')
             if order == None:
                 order = []

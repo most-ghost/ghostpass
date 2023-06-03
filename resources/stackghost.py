@@ -295,7 +295,8 @@ class cls_stack_widget(qtw.QFrame):
         var_list_domains = set()
         temp_settings_keys = self.settings.allKeys()
         for i in temp_settings_keys:
-            var_list_domains.add(i.split('/')[0])
+            domain = '_'.join(i.split('/')[0].split('_')[:-1])
+            var_list_domains.add(domain)
 
         if var_domain in var_list_domains and var_domain != 'app or site':
             var_toggle = int(self.settings.value(f'{var_domain}_{self.var_tab}/toggle_state'))
