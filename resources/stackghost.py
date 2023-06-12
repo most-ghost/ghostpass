@@ -5,6 +5,7 @@ from PyQt5 import QtCore as qtc
 from PyQt5.QtCore import pyqtSlot
 import resources.qtextramods as qte 
 import resources.smartghost as smartghost
+import resources.fontghost as fontghost
 
 ref_logic = smartghost.cls_obj_logic()
 
@@ -22,33 +23,30 @@ class cls_stack_widget(qtw.QFrame):
     def __init__(self, wgt_pass, wgt_salt, var_domain, var_tab):
         super().__init__()
 
-        temp_font_id = qtg.QFontDatabase.addApplicationFont(
-            os.path.join(
-            os.path.dirname(__file__), "typewcond_demi.otf"))
-        temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        var_font = qtg.QFont(temp_font_family)
-        var_font.setPointSize(15)
-        var_font_small = qtg.QFont(temp_font_family)
-        var_font_small.setPointSize(10)
-        del temp_font_id
-        del temp_font_family
-
         self.wgt_pass = wgt_pass
         self.wgt_salt = wgt_salt
         self.var_tab = var_tab
-
         self.settings = qtc.QSettings('most_ghost', 'ghostpass')
+
+        ### GENERAL WINDOW SETTINGS AND INIT
+    
+        font_typewriter = fontghost.fontghost.typewriter(15)
+        font_typewriter_s = fontghost.fontghost.typewriter(10)
+        font_roboto = fontghost.fontghost.roboto(15)
 
         self.setSizePolicy(
             qtw.QSizePolicy.Expanding,
             qtw.QSizePolicy.Fixed
         )
 
-        self.setLineWidth(5)
         self.setFrameStyle(qtw.QFrame.StyledPanel | qtw.QFrame.Plain)
+
+        ## WIDGETS
 
         lo_vertical = qtw.QVBoxLayout()
         self.setLayout(lo_vertical)
+
+        ## TOP STRIP
 
         struct_top_strip = qtw.QWidget()
         struct_top_strip.setSizePolicy(
@@ -64,23 +62,13 @@ class cls_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Minimum)
         self.wgt_domain_name.editingFinished.connect(self.slot_domain_format)
         # I don't want to give the option to mix and match upper and lower, so lower only.
-        self.wgt_domain_name.setFont(var_font)
+        self.wgt_domain_name.setFont(font_typewriter)
         lo_horizontal.addWidget(self.wgt_domain_name)
-
-        self.wgt_generated = qtw.QLineEdit(
-            self,
-            readOnly = True,
-            placeholderText = ''
-            )
-        self.wgt_generated.mouseReleaseEvent = lambda _: self.slot_force_highlight(self.wgt_generated)
-        lo_vertical.addWidget(self.wgt_generated)
 
         struct_spacer = qtw.QSpacerItem(40, 20, 
                                         qtw.QSizePolicy.Expanding, 
                                         qtw.QSizePolicy.Minimum)
         lo_horizontal.addSpacerItem(struct_spacer)
-
-
 
         struct_toggle_type = qtw.QWidget()
         struct_toggle_type.setSizePolicy(
@@ -94,7 +82,7 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_toggle_type_switch.clicked.connect(self.func_phrase_clicked)
         lo_toggle_type.addWidget(self.wgt_toggle_type_switch)
         self.wgt_toggle_type_label = qtw.QLabel('...')
-        self.wgt_toggle_type_label.setFont(var_font_small)
+        self.wgt_toggle_type_label.setFont(font_typewriter_s)
         self.wgt_toggle_type_label.setAlignment(qtc.Qt.AlignHCenter)
         lo_toggle_type.addWidget(self.wgt_toggle_type_label) 
         lo_horizontal.addWidget(struct_toggle_type)
@@ -106,7 +94,7 @@ class cls_stack_widget(qtw.QFrame):
         # and instead start messing around with some value you weren't trying to touch. Even if the item
         # stays in place I would never use the mouse wheel to adjust a value in a spinbox. It's just an
         # odd design concept.
-        self.wgt_size_spinbox.setFont(var_font)
+        self.wgt_size_spinbox.setFont(font_typewriter)
         lo_horizontal.addWidget(self.wgt_size_spinbox)
 
         var_dynamic_height = int(struct_top_strip.sizeHint().height())
@@ -116,7 +104,7 @@ class cls_stack_widget(qtw.QFrame):
 
         self.wgt_generate_button = qtw.QPushButton('generate')
         self.wgt_generate_button.clicked.connect(self.slot_generating_pass)
-        self.wgt_generate_button.setFont(var_font)
+        self.wgt_generate_button.setFont(font_typewriter)
         lo_horizontal.addWidget(self.wgt_generate_button)
 
         self.wgt_delete_button = qtw.QPushButton('-')
@@ -124,20 +112,33 @@ class cls_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Maximum,
             qtw.QSizePolicy.Maximum)
         self.wgt_delete_button.clicked.connect(self.slot_requesting_delete)
-        self.wgt_delete_button.setFont(var_font)
+        self.wgt_delete_button.setFont(font_typewriter)
         self.wgt_delete_button.setStyleSheet("""
         QPushButton:hover {
             background-color: #7d0f1f;
             border-color: #ff252b;
             } """)
         lo_horizontal.addWidget(self.wgt_delete_button)
+        self.var_delete_double_check = False 
+        # This must be toggled when the user hits 'delete' before the stack is actually deleted
 
-        self.var_delete_double_check = False
+
+        ## BOTTOM STRIP
+
+        self.wgt_generated = qtw.QLineEdit(
+            self,
+            readOnly = True,
+            placeholderText = ''
+            )
+        self.wgt_generated.setFont(font_roboto)
+        self.wgt_generated.mouseReleaseEvent = lambda _: self.slot_force_highlight(self.wgt_generated)
+        lo_vertical.addWidget(self.wgt_generated)
+
 
         self.func_initialize_values()
-        self.func_save_settings()
 
         qtc.QTimer.singleShot(10, self.func_just_slap_the_tv)
+        # This is explained in the function definition but it doesn't do anything important, just visual stuff.
 
 
 
@@ -199,6 +200,7 @@ class cls_stack_widget(qtw.QFrame):
             qtc.QTimer.singleShot(60000, lambda: self.wgt_generated.setText(""))
                 # 60000 milliseconds = 1 minute
 
+    
 
     @pyqtSlot()
     def slot_fake_gen_click(self):
@@ -282,7 +284,7 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_domain_name.setText(domain)
         # A) I want to get rid of | since it's used as a delimiter
         # B) I want to get rid of / since it's used in the key itself
-        # C) A little kludgy but I wanna stop anyone who gets cheeky
+        # C) I want to stop anyone who gets cheeky since that could maybe break a few things
         # D) I want to make sure it's always lowercase just to make consistency easier to maintain
         # I could try to work around these but they're pretty uncommon characters so we'll just trash
         # them instead.

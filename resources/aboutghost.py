@@ -2,9 +2,13 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 import os
+import resources.fontghost as fontghost
 
 class cls_popup_about(qtw.QDialog):
     def __init__(self, parent=None):
+
+        ### GENERAL WINDOW SETTINGS AND INIT
+
         super().__init__()
 
         self.setMinimumSize(600, 800)
@@ -14,33 +18,27 @@ class cls_popup_about(qtw.QDialog):
             os.path.join(
             os.path.dirname(__file__), "ghosticon.svg")))
 
-        temp_font_id = qtg.QFontDatabase.addApplicationFont(
-            os.path.join(
-            os.path.dirname(__file__), "typewcond_demi.otf"))
-        temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        var_font = qtg.QFont(temp_font_family)
-        var_font_big = qtg.QFont(temp_font_family)
-        var_font.setPointSize(13)
-        var_font_big.setPointSize(15)
-        del temp_font_family
-        del temp_font_id
+        font_typewriter = fontghost.fontghost.typewriter(13)
+        font_typewriter_big = fontghost.fontghost.typewriter(15)
 
         self.setWindowTitle('about')
         
+        ## WIDGET CREATION
+
         wgt_readme_text = qtw.QTextEdit()
-        wgt_readme_text.setFont(var_font)
+        wgt_readme_text.setFont(font_typewriter)
         wgt_readme_text.setReadOnly(True)
 
 
         wgt_about_text = qtw.QTextEdit()
-        wgt_about_text.setFont(var_font)
+        wgt_about_text.setFont(font_typewriter)
         wgt_about_text.setReadOnly(True)
 
         wgt_gpl_text = qtw.QTextEdit()
         wgt_gpl_text.setReadOnly(True)
 
         struct_tab_widget = qtw.QTabWidget()
-        struct_tab_widget.setFont(var_font_big)
+        struct_tab_widget.setFont(font_typewriter_big)
         struct_tab_widget.setStyleSheet("""
             QTabWidget::pane {border-top: 2px solid #3e2680;}
             QTabWidget::tab-bar {left: 15px;}
@@ -59,12 +57,12 @@ class cls_popup_about(qtw.QDialog):
 
         wgt_exit_button = qtw.QPushButton('okay')
         wgt_exit_button.clicked.connect(self.close)
-        wgt_exit_button.setFont(var_font_big)
+        wgt_exit_button.setFont(font_typewriter_big)
         struct_lo.addWidget(wgt_exit_button)
         
         self.setLayout(struct_lo)
 
-
+        ## ACTUAL TEXT
 
         wgt_readme_text.setMarkdown("""# ghostpass.
 

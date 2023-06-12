@@ -8,6 +8,7 @@ import resources.qtextramods as qte
 import resources.stackghost as stackghost
 import resources.memghost as memghost
 import resources.aboutghost as aboutghost
+import resources.fontghost as fontghost
 import resources.breeze_spooky
 
 
@@ -45,26 +46,18 @@ class cls_main_window(qtw.QMainWindow):
             self.resize(qtc.QSize(600, 900)) # Default size if no settings are found
         self.setMinimumSize(qtc.QSize(600, 400))
 
-        temp_font_id = qtg.QFontDatabase.addApplicationFont(
-            os.path.join(
-            os.path.dirname(__file__), "resources/typewcond_demi.otf"))
-        temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        self.var_font = qtg.QFont(temp_font_family)
-        self.var_font.setPointSize(13)
-        self.var_font_big = qtg.QFont(temp_font_family)
-        self.var_font_big.setPointSize(18)
-        del temp_font_id
-        del temp_font_family
+        self.font_typewriter = fontghost.fontghost.typewriter(13)
+        self.font_typewriter_big = fontghost.fontghost.typewriter(18)
 
         self.setWindowTitle('ghostpass')
-        self.menuBar().setFont(self.var_font)
+        self.menuBar().setFont(self.font_typewriter)
         self.setWindowIconText('ghostpass')
         self.setWindowOpacity(0.98) # for that ghostly touch
 
         ### TOP MENU
 
         menu_file = self.menuBar().addMenu('system')
-        menu_file.setFont(self.var_font)
+        menu_file.setFont(self.font_typewriter)
         act_import = menu_file.addAction('import')
         act_export = menu_file.addAction('export')
         menu_file.addSeparator()
@@ -87,7 +80,7 @@ class cls_main_window(qtw.QMainWindow):
         self.setCentralWidget(struct_top)
 
         wgt_logo = qtw.QLabel()
-        self.func_set_logo_size(wgt_logo, self.var_font_big)
+        self.func_set_logo_size(wgt_logo, self.font_typewriter_big)
         wgt_logo.setAlignment(qtc.Qt.AlignHCenter | 
                              qtc.Qt.AlignVCenter)
         lo_top.addWidget(wgt_logo)
@@ -100,15 +93,15 @@ class cls_main_window(qtw.QMainWindow):
 
         self.wgt_pass_edit = qte.PasswordEdit()
         self.wgt_pass_edit.setPlaceholderText('password')
-        self.wgt_pass_edit.setFont(self.var_font_big)
+        self.wgt_pass_edit.setFont(self.font_typewriter_big)
         lo_pass_strip.addWidget(self.wgt_pass_edit, 2)
         self.wgt_salt_edit = qte.PasswordEdit()
         self.wgt_salt_edit.setPlaceholderText('double pass')
-        self.wgt_salt_edit.setFont(self.var_font_big)
+        self.wgt_salt_edit.setFont(self.font_typewriter_big)
         lo_pass_strip.addWidget(self.wgt_salt_edit, 1)
         wgt_gen_all = qtw.QPushButton('generate all')
         wgt_gen_all.clicked.connect(self.slot_generate_all)
-        wgt_gen_all.setFont(self.var_font_big)
+        wgt_gen_all.setFont(self.font_typewriter_big)
         lo_pass_strip.addWidget(wgt_gen_all, 1)
         if (self.settings.value('--ghostconfig/pass_visible')) == 'yes':
             self.wgt_pass_edit.on_toggle_password_Action()
@@ -119,7 +112,7 @@ class cls_main_window(qtw.QMainWindow):
         ### MAIN WINDOW - STACK AREA - TABS AND STACKS
 
         self.struct_tab_widget = qtw.QTabWidget()
-        self.struct_tab_widget.setFont(self.var_font)
+        self.struct_tab_widget.setFont(self.font_typewriter)
         self.struct_tab_widget.setStyleSheet("""
             QTabWidget::pane {border: 5px solid #3e2680;
                               border-right: 0px;
@@ -139,7 +132,7 @@ class cls_main_window(qtw.QMainWindow):
         self.struct_tab_widget.setTabPosition(qtw.QTabWidget.West)
         self.struct_tab_widget.setMovable(True)
 
-        self.func_fill_tab_dict(self.var_font_big)
+        self.func_fill_tab_dict(self.font_typewriter_big)
         lo_top.addWidget(self.struct_tab_widget)
 
         self.ref_memory.func_settings_init()
@@ -158,6 +151,7 @@ class cls_main_window(qtw.QMainWindow):
 
         # We're passing a reference to the widget rather than only the text because we want to
         # check the text later on, immediately before generating a password
+        # You should probably do this with signals instead, this is not the best method.
         
         self.setUpdatesEnabled(False)
 
@@ -184,18 +178,19 @@ class cls_main_window(qtw.QMainWindow):
     @pyqtSlot()
     def slot_generate_all(self):
 
-        tab = self.struct_tab_widget.tabText(self.struct_tab_widget.currentIndex())
+        list_tabs = [self.struct_tab_widget.tabText(i) for i in range(self.struct_tab_widget.count())]
+        print(list_tabs)
 
-        temp_index = self.dict_tabs[tab]['layout'].count()
+        for tab in list_tabs:
 
-        for count in range(temp_index - 1): # -1 because there's a '+' button widget at the very end
-            widget = self.dict_tabs[tab]['layout'].itemAt(count).widget()
-            widget.slot_fake_gen_click()
-            qtw.QApplication.processEvents()
-            # 'Process Events' ensures that Qt will stop and update whenever it has generated a password,
-            # meaning each password gets shown being filled in sequentially. A better solution would have been
-            # multithreading but the design of ghostpass with each stack individually managing itself doesn't
-            # lend itself easily to multithreading. Lessons for the future.
+            temp_index = self.dict_tabs[tab]['layout'].count()
+
+            for count in range(temp_index - 1): # -1 because there's a '+' button widget at the very end
+                widget = self.dict_tabs[tab]['layout'].itemAt(count).widget()
+                widget.slot_fake_gen_click()
+                qtw.QApplication.processEvents()
+                # 'Process Events' ensures that Qt will stop and update whenever it has generated a password,
+                # meaning each password gets shown being filled in sequentially.
 
     @pyqtSlot()
     def slot_reset_scroll_area(self):
@@ -297,7 +292,7 @@ class cls_main_window(qtw.QMainWindow):
 
         self.struct_tab_widget.clear()
         self.dict_tabs = {}
-        self.func_fill_tab_dict(self.var_font)
+        self.func_fill_tab_dict(self.font_typewriter)
         self.ref_memory.func_settings_init()
         self.func_update_tab_order()
 
@@ -322,7 +317,7 @@ class cls_main_window(qtw.QMainWindow):
 
         self.struct_tab_widget.clear()
         self.dict_tabs = {}
-        self.func_fill_tab_dict(self.var_font)
+        self.func_fill_tab_dict(self.font_typewriter)
         self.ref_memory.func_settings_init()
         self.func_update_tab_order()
 
@@ -360,14 +355,14 @@ class cls_main_window(qtw.QMainWindow):
 
         self.struct_tab_widget.clear()
         self.dict_tabs = {}
-        self.func_fill_tab_dict(self.var_font)
+        self.func_fill_tab_dict(self.font_typewriter)
         self.ref_memory.func_settings_init()
         self.func_update_tab_order()
       
 
-        
-
     def closeEvent(self, event):
+        # This is a built in Qt method that's being overwritten 
+        # So that settings can be updated one last time before the window closes.
         for tab in self.dict_tabs.keys():
             self.ref_memory.func_settings_update(self.dict_tabs)
         self.settings.setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')

@@ -2,13 +2,14 @@ from PyQt5 import QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 from PyQt5.QtCore import pyqtSlot
+import resources.fontghost as fontghost
 import json
 import os
 
 dict_prefs =   {'--ghostconfig/pass_visible':'no', 
                 '--ghostconfig/logo_size':'normal',
                  '--ghostconfig/autoblank': 'yes',
-                 '--ghostconfig/second_required': 'yes',
+                 '--ghostconfig/second_required': 'no',
                  '--ghostconfig/default_type': 'hash', 
                  '--ghostconfig/default_len_hash': '128',
                  '--ghostconfig/default_len_word': '10',
@@ -121,20 +122,11 @@ class cls_popup_settings(qtw.QDialog):
         self.wgt_mod_category.clicked.connect(self.hook_up_mod_cat)
 
 
-
-        temp_font_id = qtg.QFontDatabase.addApplicationFont(
-            os.path.join(
-            os.path.dirname(__file__), "typewcond_demi.otf"))
-        temp_font_family = qtg.QFontDatabase.applicationFontFamilies(temp_font_id)[0]
-        self.var_font = qtg.QFont(temp_font_family)
-        self.var_font.setPointSize(15)
-        del temp_font_family
-        del temp_font_id
-
-
+        self.font_typewriter = fontghost.fontghost.typewriter(15)
+   
         for i in range(self.layout().count()):
             temp_row = self.layout().itemAt(i)
-            temp_row.widget().setFont(self.var_font)
+            temp_row.widget().setFont(self.font_typewriter)
 
 
 
@@ -183,8 +175,7 @@ class cls_popup_settings(qtw.QDialog):
     def hook_up_add_cat(self):
         popup_add_cat = cls_popup_category(
             'add category', 
-            'please enter the name of your new category', 
-            self.var_font, 
+            'please enter the name of your new category'
             )
 
         if popup_add_cat.exec() == qtw.QDialog.Accepted:
@@ -196,7 +187,6 @@ class cls_popup_settings(qtw.QDialog):
         popup_del_cat = cls_popup_category(
             'delete category', 
             'this is permanent! deleting a category will delete \nthe whole list inside of it too', 
-            self.var_font, 
             line_text="if you're sure, type the name in here"
             )
 
@@ -209,7 +199,6 @@ class cls_popup_settings(qtw.QDialog):
         popup_del_cat = cls_popup_category(
             'rename category', 
             'please select your category, \nand then enter the new name \nin the space below', 
-            self.var_font,
             category_list=True
             )
 
@@ -218,11 +207,10 @@ class cls_popup_settings(qtw.QDialog):
             self.sig_rename_tab.emit(del_tab.lower(), old_tab)
 
             
-
     def keyPressEvent(self, event):
         event.ignore()
         # For some reason, hitting 'enter' when adjusting a spinbox will activate a button instead.
-        # This seems to be some weird Qt bug unrelated to my code. Since we don't need the keyboard
+        # This seems to be some weird Qt bug unrelated to my code? Since we don't need the keyboard
         # in this menu anyway, we'll just ignore it entirely.
         # Note that this doesn't actually disable the number keys from working on the spinbox, so we're
         # all good.
@@ -234,11 +222,17 @@ class cls_popup_settings(qtw.QDialog):
 
 
 
-class cls_popup_category(qtw.QDialog):
 
-    def __init__(self, window_title, label_main, font, line_text = '', category_list = False, parent=None):
+
+
+class cls_popup_category(qtw.QDialog):
+    # This is the generic box that will pop up whenever the user selects one of the options related to category tabs.
+    # It can be changed to be used for adding, removing or renaming category tabs.
+
+    def __init__(self, window_title, label_main, line_text = '', category_list = False, parent=None):
         super().__init__(parent)
-        font.setPointSize(17)
+        font = fontghost.fontghost.typewriter(17)
+
         self.category_list = category_list
 
         self.setWindowTitle(window_title)
@@ -300,6 +294,8 @@ class cls_popup_category(qtw.QDialog):
 class cls_obj_memory(qtc.QObject):
     """ 
     This holds all of our memory management logic.
+    Or, well, most of it. Some parts are taken care of by the windows- 
+    for example the main window saves its own size.
     """
 
     sig_make_stack = qtc.pyqtSignal(str, str)
