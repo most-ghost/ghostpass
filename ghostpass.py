@@ -43,7 +43,7 @@ class cls_main_window(qtw.QMainWindow):
             self.resize(qtc.QSize(int(temp_size[0]),int(temp_size[1])))
             del temp_size
         except (TypeError, AttributeError):
-            self.resize(qtc.QSize(600, 900)) # Default size if no settings are found
+            self.resize(qtc.QSize(800, 1000)) # Default size if no settings are found
         self.setMinimumSize(qtc.QSize(600, 400))
 
         self.font_typewriter = fontghost.fontghost.typewriter(13)
