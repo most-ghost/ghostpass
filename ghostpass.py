@@ -372,10 +372,15 @@ class cls_main_window(qtw.QMainWindow):
 
 if __name__ == '__main__': 
     app = qtw.QApplication(sys.argv)
+    img_splash = qtg.QPixmap(os.path.join(
+                             os.path.dirname(__file__), "resources/ghostdouble.png"))
+    window_splash = qtw.QSplashScreen(img_splash)
+    window_splash.show()
+    qtw.QApplication.processEvents()
     style_file = qtc.QFile(":/dark-spooky/stylesheet.qss")
     style_file.open(qtc.QFile.ReadOnly | qtc.QFile.Text)
     stream = qtc.QTextStream(style_file)
     app.setStyleSheet(stream.readAll())
     window_main = cls_main_window()
+    window_splash.close()
     sys.exit(app.exec())
-
