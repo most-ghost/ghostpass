@@ -1,6 +1,6 @@
 import sys
 import os
-from PyQt5 import QtWidgets as qtw
+from PyQt5 import QtGui, QtWidgets as qtw
 from PyQt5 import QtGui as qtg
 from PyQt5 import QtCore as qtc
 from PyQt5.QtCore import pyqtSlot
@@ -18,7 +18,7 @@ class cls_main_window(qtw.QMainWindow):
     This is the code for the GUI of the main window only. Code to maintain each stack widget is in stackghost.py,
     password generation code is in smartghost and code related to settings management is in memghost.
     """
-
+    sig_splashoff = qtc.pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -53,6 +53,13 @@ class cls_main_window(qtw.QMainWindow):
         self.menuBar().setFont(self.font_typewriter)
         self.setWindowIconText('ghostpass')
         self.setWindowOpacity(0.98) # for that ghostly touch
+
+        qtc.QTimer.singleShot(10, self.initUI)
+        # The purpose of this is to give Qt a moment to catch up and display the splash screen.
+        # This seems to be more reliable and foolproof than 'qtw.QApplication.processEvents()'
+        # at least in this situation.
+
+    def initUI(self):
 
         ### TOP MENU
 
@@ -138,7 +145,7 @@ class cls_main_window(qtw.QMainWindow):
         self.ref_memory.func_settings_init()
 
         self.show()
-
+        self.sig_splashoff.emit()
 
     def slot_add_stack(self, domain='app or site', tab=''):
         wgt_pass = self.wgt_pass_edit
@@ -368,19 +375,45 @@ class cls_main_window(qtw.QMainWindow):
         self.settings.setValue('--ghostconfig/size', f'{self.size().width()}|{self.size().height()}')
         self.func_update_tab_order()
         super().closeEvent(event)
-    
+
+
+class cls_splash(qtw.QSplashScreen):
+    def __init__(self):
+        img_splash = qtg.QPixmap(os.path.join(
+                                 os.path.dirname(__file__), "resources/ghostdouble.png"))
+
+        super().__init__(img_splash)
+
+    def custom_close(self):
+        self.activateWindow()
+        qtc.QTimer.singleShot(500, self.fade_out)
+
+    def fade_out(self):
+        fade_out = qtw.QGraphicsOpacityEffect()
+        window_splash.setGraphicsEffect(fade_out)
+        self.animation = qtc.QPropertyAnimation(fade_out, b"opacity")
+        self.animation.setDuration(1000)
+        self.animation.setStartValue(1)
+        self.animation.setEndValue(0)
+        self.animation.setEasingCurve(qtc.QEasingCurve.InQuad)
+        self.animation.start()
+        qtc.QTimer.singleShot(1000, self.close)
+
+    def mousePressEvent(self, event):
+        pass
+        
 
 if __name__ == '__main__': 
+
     app = qtw.QApplication(sys.argv)
-    img_splash = qtg.QPixmap(os.path.join(
-                             os.path.dirname(__file__), "resources/ghostdouble.png"))
-    window_splash = qtw.QSplashScreen(img_splash)
+    window_splash = cls_splash()
+
     window_splash.show()
-    qtw.QApplication.processEvents()
+
     style_file = qtc.QFile(":/dark-spooky/stylesheet.qss")
     style_file.open(qtc.QFile.ReadOnly | qtc.QFile.Text)
     stream = qtc.QTextStream(style_file)
     app.setStyleSheet(stream.readAll())
     window_main = cls_main_window()
-    window_splash.close()
+    window_main.sig_splashoff.connect(window_splash.custom_close)
     sys.exit(app.exec())
