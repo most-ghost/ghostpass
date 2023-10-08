@@ -97,15 +97,22 @@ class cls_main_window(qtw.QMainWindow):
         struct_pass_strip = qtw.QWidget()
         lo_pass_strip = qtw.QHBoxLayout(struct_pass_strip)
         lo_top.addWidget(struct_pass_strip)
+        
+        struct_phrase_strip = qtw.QWidget()
+        lo_phrase_strip = qtw.QHBoxLayout(struct_phrase_strip)
+        lo_top.addWidget(struct_phrase_strip)
+        # This HBox will only be used for a single widget, but we put it in a separate layout
+        # instead of adding directly to lo_top so that it is aligned with the password field.
+
 
         self.wgt_pass_edit = qte.PasswordEdit()
         self.wgt_pass_edit.setPlaceholderText('password')
         self.wgt_pass_edit.setFont(self.font_typewriter_big)
         lo_pass_strip.addWidget(self.wgt_pass_edit, 2)
         self.wgt_salt_edit = qte.PasswordEdit()
-        self.wgt_salt_edit.setPlaceholderText('double pass')
+        self.wgt_salt_edit.setPlaceholderText('passphrase')
         self.wgt_salt_edit.setFont(self.font_typewriter_big)
-        lo_pass_strip.addWidget(self.wgt_salt_edit, 1)
+        lo_phrase_strip.addWidget(self.wgt_salt_edit, 1)
         wgt_gen_all = qtw.QPushButton('generate all')
         wgt_gen_all.clicked.connect(self.slot_generate_all)
         wgt_gen_all.setFont(self.font_typewriter_big)

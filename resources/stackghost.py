@@ -185,10 +185,10 @@ class cls_stack_widget(qtw.QFrame):
             self.wgt_generated.setPlaceholderText('please enter a longer password.')
         elif var_salt_toggle == 'yes' and var_salt == '':
             self.wgt_generated.setText('')
-            self.wgt_generated.setPlaceholderText('please enter a second password.')
-        elif var_salt_toggle == 'yes' and len(var_salt) < 8:
+            self.wgt_generated.setPlaceholderText('please enter a passphrase as well.')
+        elif var_salt_toggle == 'yes' and len(var_salt) < 32:
             self.wgt_generated.setText('')
-            self.wgt_generated.setPlaceholderText('please enter a longer second password.')
+            self.wgt_generated.setPlaceholderText('please enter a longer passphrase.')
         else:
             if self.var_global_toggle_state == 2:
                 self.wgt_generated.setText(ref_logic.func_hash_gen(var_domain, var_password, var_size, var_salt))

@@ -9,7 +9,7 @@ import os
 dict_prefs =   {'--ghostconfig/pass_visible':'no', 
                 '--ghostconfig/logo_size':'normal',
                  '--ghostconfig/autoblank': 'yes',
-                 '--ghostconfig/second_required': 'no',
+                 '--ghostconfig/second_required': 'yes',
                  '--ghostconfig/default_type': 'hash', 
                  '--ghostconfig/default_len_hash': '128',
                  '--ghostconfig/default_len_word': '10',
@@ -81,7 +81,7 @@ class cls_popup_settings(qtw.QDialog):
             qtw.QLabel('<h2>app settings</h2>')
         )
         self.layout().addRow("passwords visible by default", self.wgt_pass_visible)
-        self.layout().addRow("second password required", self.wgt_second_required)
+        self.layout().addRow("passphrase required", self.wgt_second_required)
         self.layout().addRow("passwords blank after 1 minute", self.wgt_autoblank)
         self.layout().addRow("ghostpass logo size*", self.wgt_logo_size)
         self.layout().addRow(
