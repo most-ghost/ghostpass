@@ -48,11 +48,13 @@ class cls_main_window(qtw.QMainWindow):
 
         self.font_typewriter = fontghost.fontghost.typewriter(13)
         self.font_typewriter_big = fontghost.fontghost.typewriter(18)
+        self.font_roboto = fontghost.fontghost.roboto(12)
+        self.font_roboto_big = fontghost.fontghost.roboto(16)
 
         self.setWindowTitle('ghostpass')
         self.menuBar().setFont(self.font_typewriter)
         self.setWindowIconText('ghostpass')
-        self.setWindowOpacity(0.98) # for that ghostly touch
+        self.setWindowOpacity(0.97) # for that ghostly touch
 
         qtc.QTimer.singleShot(10, self.initUI)
         # The purpose of this is to give Qt a moment to catch up and display the splash screen.
@@ -64,7 +66,7 @@ class cls_main_window(qtw.QMainWindow):
         ### TOP MENU
 
         menu_file = self.menuBar().addMenu('system')
-        menu_file.setFont(self.font_typewriter)
+        menu_file.setFont(self.font_roboto)
         act_import = menu_file.addAction('import')
         act_export = menu_file.addAction('export')
         menu_file.addSeparator()
@@ -103,15 +105,15 @@ class cls_main_window(qtw.QMainWindow):
         lo_top.addWidget(struct_phrase_strip)
         # This HBox will only be used for a single widget, but we put it in a separate layout
         # instead of adding directly to lo_top so that it is aligned with the password field.
-
+    
 
         self.wgt_pass_edit = qte.PasswordEdit()
         self.wgt_pass_edit.setPlaceholderText('password')
-        self.wgt_pass_edit.setFont(self.font_typewriter_big)
+        self.wgt_pass_edit.setFont(self.font_roboto_big)
         lo_pass_strip.addWidget(self.wgt_pass_edit, 2)
         self.wgt_salt_edit = qte.PasswordEdit()
         self.wgt_salt_edit.setPlaceholderText('passphrase')
-        self.wgt_salt_edit.setFont(self.font_typewriter_big)
+        self.wgt_salt_edit.setFont(self.font_roboto_big)
         lo_phrase_strip.addWidget(self.wgt_salt_edit, 1)
         wgt_gen_all = qtw.QPushButton('generate all')
         wgt_gen_all.clicked.connect(self.slot_generate_all)
@@ -126,14 +128,14 @@ class cls_main_window(qtw.QMainWindow):
         ### MAIN WINDOW - STACK AREA - TABS AND STACKS
 
         self.struct_tab_widget = qtw.QTabWidget()
-        self.struct_tab_widget.setFont(self.font_typewriter)
+        self.struct_tab_widget.setFont(self.font_typewriter_big)
         self.struct_tab_widget.setStyleSheet("""
             QTabWidget::pane {border: 5px solid #3e2680;
                               border-right: 0px;
                               border-bottom: 0px;
                               border-top-left-radius: 15px;
                               }
-            QTabWidget::tab-bar {top: 15px;}
+            QTabWidget::tab-bar { top: 15px; }
             QTabBar::tab {background-color: #0e0d0a; 
                           color: #d4d8e0;
                           padding: 10px;
@@ -142,6 +144,10 @@ class cls_main_window(qtw.QMainWindow):
                                    color: #d4d8e0; 
                                    border-color: #9B9B9B;
                                    border-bottom-color: #d4d8e0; }
+            QTabBar::tab:!selected { margin-left: 10px; }
+            QTabBar::tab:disabled { border-bottom: none; }
+            QTabBar::tear { image: none; }
+            QTabBar::scroller { width: 20px; }
             """)
         self.struct_tab_widget.setTabPosition(qtw.QTabWidget.West)
         self.struct_tab_widget.setMovable(True)

@@ -34,7 +34,7 @@ class cls_obj_logic(qtc.QObject):
         
         var_hexed = basc.hexlify(hashed_pass.encode('utf-8'))
         b85_pass = b64.b85encode(var_hexed).decode('utf-8')
-        # This process will basically inject a whole lot of special characters into the password.
+        # This process will inject a whole lot of special characters into the password.
 
         return(b85_pass[:-var_size:-1])
         # We'll pull backwards from the end instead of the beginning because the beginning has information appended to it

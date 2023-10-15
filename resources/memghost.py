@@ -6,7 +6,7 @@ import resources.fontghost as fontghost
 import json
 import os
 
-dict_prefs =   {'--ghostconfig/pass_visible':'no', 
+global_dict_prefs =   {'--ghostconfig/pass_visible':'no', 
                 '--ghostconfig/logo_size':'normal',
                  '--ghostconfig/autoblank': 'yes',
                  '--ghostconfig/second_required': 'yes',
@@ -37,139 +37,180 @@ class cls_popup_settings(qtw.QDialog):
     def __init__(self, parent=None):
         super().__init__(modal=False)
 
-        self.setLayout(qtw.QFormLayout())
+        self.setLayout(qtw.QVBoxLayout())
+        struct_scroll_area = qtw.QScrollArea()
+        struct_scroll_area.setWidgetResizable(True)
+        self.layout().addWidget(struct_scroll_area)
+        struct_scroll = qtw.QWidget()
+        struct_scroll_area.setWidget(struct_scroll)
+
+        lo_form = qtw.QFormLayout()
+        struct_scroll.setLayout(lo_form)
 
         self.setWindowTitle('preferences')
-
-        self.setWindowOpacity(0.98)
-
-
+        self.setWindowOpacity(0.97)
         self.setWindowIcon(qtg.QIcon(
             os.path.join(
             os.path.dirname(__file__), "ghosticon.svg")))
-        
-        self.wgt_pass_visible = qtw.QPushButton(dict_prefs['--ghostconfig/pass_visible'])
-        self.wgt_second_required = qtw.QPushButton(dict_prefs['--ghostconfig/second_required'])
-        self.wgt_hashword_toggle = qtw.QComboBox()
-        self.wgt_hashword_toggle.addItem("hash")
-        self.wgt_hashword_toggle.addItem("word")
-        self.wgt_hashword_toggle.setCurrentText(dict_prefs['--ghostconfig/default_type'])
-        self.wgt_autoblank = qtw.QPushButton(dict_prefs['--ghostconfig/autoblank'])
-        self.wgt_logo_size = qtw.QComboBox()
-        self.wgt_logo_size.addItem("disabled")
-        self.wgt_logo_size.addItem("normal")
-        self.wgt_logo_size.addItem("2x")
-        self.wgt_logo_size.setCurrentText(dict_prefs['--ghostconfig/logo_size'])
-        self.wgt_hash_length = qtw.QSpinBox(maximum=256, minimum=20)
-        self.wgt_hash_length.setValue(int(dict_prefs['--ghostconfig/default_len_hash']))
-        self.wgt_word_length = qtw.QSpinBox(maximum=20, minimum=6)
-        self.wgt_word_length.setValue(int(dict_prefs['--ghostconfig/default_len_word']))
-        self.wgt_add_category = qtw.QPushButton('create')
-        self.wgt_rem_category = qtw.QPushButton('remove')
-        self.wgt_mod_category = qtw.QPushButton('modify')
+
+        font_typewriter_big = fontghost.fontghost.typewriter(15)
+        font_roboto = fontghost.fontghost.roboto(12)
+        font_roboto_small = fontghost.fontghost.roboto(9)
+
+
+        self.dict_widgets = {}
+
+        self.dict_widgets['pass_visible'] = qtw.QPushButton(global_dict_prefs['--ghostconfig/pass_visible'])
+        self.dict_widgets['second_required'] = qtw.QPushButton(global_dict_prefs['--ghostconfig/second_required'])
+        self.dict_widgets['stack_type'] = qtw.QComboBox()
+        self.dict_widgets['stack_type'].addItem("hash")
+        self.dict_widgets['stack_type'].addItem("word")
+        self.dict_widgets['stack_type'].setCurrentText(global_dict_prefs['--ghostconfig/default_type'])
+        self.dict_widgets['autoblank'] = qtw.QPushButton(global_dict_prefs['--ghostconfig/autoblank'])
+        self.dict_widgets['logo_size'] = qtw.QComboBox()
+        self.dict_widgets['logo_size'].addItem("disabled")
+        self.dict_widgets['logo_size'].addItem("normal")
+        self.dict_widgets['logo_size'].addItem("2x")
+        self.dict_widgets['logo_size'].setCurrentText(global_dict_prefs['--ghostconfig/logo_size'])
+        self.dict_widgets['char_length'] = qtw.QSpinBox(maximum=256, minimum=20)
+        self.dict_widgets['char_length'].setValue(int(global_dict_prefs['--ghostconfig/default_len_hash']))
+        self.dict_widgets['word_length'] = qtw.QSpinBox(maximum=20, minimum=6)
+        self.dict_widgets['word_length'].setValue(int(global_dict_prefs['--ghostconfig/default_len_word']))
+        self.dict_widgets['add_cat'] = qtw.QPushButton('create')
+        self.dict_widgets['rem_cat'] = qtw.QPushButton('remove')
+        self.dict_widgets['name_cat'] = qtw.QPushButton('modify')
+
+        for key in self.dict_widgets.keys():
+            self.dict_widgets[key].setFont(font_roboto)
+
+
+        dict_top_labels = {}
+        dict_top_labels['prefs'] = qtw.QLabel('<h1>preferences</h1>')
+        dict_top_labels['app'] = qtw.QLabel('<h2>app settings</h2>')
+        dict_top_labels['stack'] = qtw.QLabel('<h2>stack settings</h2>')
+        dict_top_labels['cat'] = qtw.QLabel('<h2>category settings</h2>')
+
+        for key in dict_top_labels.keys():
+            dict_top_labels[key].setFont(font_typewriter_big)
+
+        dict_label = {}
+
+        dict_label['pass_visible'] = qtw.QLabel("passwords visible by default")
+        dict_label['second_required'] = qtw.QLabel("passphrase enforced")
+        dict_label['second_warning'] = qtw.QLabel("( you really shouldn't disable the passphrase )")
+        dict_label['autoblank'] = qtw.QLabel("passwords blank after 1 minute")
+        dict_label['logo_size'] = qtw.QLabel("ghostpass logo size *")
+        dict_label['logo_size_warning'] = qtw.QLabel("<h5>(* needs restart )</h5>")
+        dict_label['stack_type'] = qtw.QLabel("default stack type")
+        dict_label['char_length'] = qtw.QLabel("default character length (hash)")
+        dict_label['word_length'] = qtw.QLabel("default number of words (passphrase)")
+        dict_label['add_cat'] = qtw.QLabel("add new category")
+        dict_label['rem_cat'] = qtw.QLabel("delete category")
+        dict_label['name_cat'] = qtw.QLabel("rename category")
+
+        for key in dict_label.keys():
+            dict_label[key].setFont(font_roboto)
+        dict_label['second_warning'].setFont(font_roboto_small)
+        dict_label['logo_size_warning'].setFont(font_roboto_small)
 
 
 
-
-        self.layout().addRow(
-            qtw.QLabel('<h1>preferences</h1>')
+        lo_form.addRow(
+            dict_top_labels['prefs']
         )
-        self.layout().addRow(
+        lo_form.addRow(
             qtw.QLabel('<h6></h6>')
         )
-        self.layout().addRow(
-            qtw.QLabel('<h2>app settings</h2>')
+        lo_form.addRow(
+            dict_top_labels['app']
         )
-        self.layout().addRow("passwords visible by default", self.wgt_pass_visible)
-        self.layout().addRow("passphrase required", self.wgt_second_required)
-        self.layout().addRow("passwords blank after 1 minute", self.wgt_autoblank)
-        self.layout().addRow("ghostpass logo size*", self.wgt_logo_size)
-        self.layout().addRow(
-            qtw.QLabel('<h5>(* needs restart)</h5>'),
-        )
-        self.layout().addRow(
+        lo_form.addRow(dict_label['pass_visible'], self.dict_widgets['pass_visible'])
+        lo_form.addRow(dict_label['second_required'], self.dict_widgets['second_required'])
+        lo_form.addRow(dict_label['second_warning'])
+        lo_form.addRow(dict_label['autoblank'], self.dict_widgets['autoblank'])
+        lo_form.addRow(dict_label['logo_size'], self.dict_widgets['logo_size'])
+        lo_form.addRow(dict_label['logo_size_warning'])
+        lo_form.addRow(
             qtw.QLabel('<h6></h6>')
         )
-        self.layout().addRow(
-            qtw.QLabel('<h2>stack settings</h2>'),
+        lo_form.addRow(
+            dict_top_labels['stack']
         )
-        self.layout().addRow("default stack type", self.wgt_hashword_toggle)
-        self.layout().addRow("default character length (hash)", self.wgt_hash_length)
-        self.layout().addRow("default number of words (passphrase)", self.wgt_word_length)
-        self.layout().addRow(
+        lo_form.addRow(dict_label['stack_type'], self.dict_widgets['stack_type'])
+        lo_form.addRow(dict_label['char_length'], self.dict_widgets['char_length'])
+        lo_form.addRow(dict_label['word_length'], self.dict_widgets['word_length'])
+        lo_form.addRow(
             qtw.QLabel('<h6></h6>')
         )
-        self.layout().addRow(
-            qtw.QLabel('<h2>category settings</h2>'),
+        lo_form.addRow(
+            dict_top_labels['cat']
         )
-        self.layout().addRow("add new category", self.wgt_add_category)
-        self.layout().addRow("delete category", self.wgt_rem_category)
-        self.layout().addRow("rename category", self.wgt_mod_category)
+        lo_form.addRow(dict_label['add_cat'], self.dict_widgets['add_cat'])
+        lo_form.addRow(dict_label['rem_cat'], self.dict_widgets['rem_cat'])
+        lo_form.addRow(dict_label['name_cat'], self.dict_widgets['name_cat'])
 
 
-        self.wgt_close_button = qtw.QPushButton('save', clicked = self.close)
-        self.layout().addRow(self.wgt_close_button)
+        wgt_close_button = qtw.QPushButton('save', clicked = self.close)
+        wgt_close_button.setFont(font_typewriter_big)
+        lo_form.addRow(wgt_close_button)
 
-        self.wgt_pass_visible.clicked.connect(self.hook_up_visible_pass)
-        self.wgt_second_required.clicked.connect(self.hook_up_second_pass)
-        self.wgt_autoblank.clicked.connect(self.hook_up_autoblank)
-        self.wgt_hashword_toggle.currentTextChanged.connect(self.hook_up_hash_or_word)
-        self.wgt_logo_size.currentTextChanged.connect(self.hook_up_logo_size)
-        self.wgt_hash_length.valueChanged.connect(self.hook_up_hash_length)
-        self.wgt_word_length.valueChanged.connect(self.hook_up_word_length)
-        self.wgt_add_category.clicked.connect(self.hook_up_add_cat)
-        self.wgt_rem_category.clicked.connect(self.hook_up_del_cat)
-        self.wgt_mod_category.clicked.connect(self.hook_up_mod_cat)
+        self.dict_widgets['pass_visible'].clicked.connect(self.hook_up_visible_pass)
+        self.dict_widgets['second_required'].clicked.connect(self.hook_up_second_pass)
+        self.dict_widgets['autoblank'].clicked.connect(self.hook_up_autoblank)
+        self.dict_widgets['stack_type'].currentTextChanged.connect(self.hook_up_hash_or_word)
+        self.dict_widgets['logo_size'].currentTextChanged.connect(self.hook_up_logo_size)
+        self.dict_widgets['char_length'].valueChanged.connect(self.hook_up_hash_length)
+        self.dict_widgets['word_length'].valueChanged.connect(self.hook_up_word_length)
+        self.dict_widgets['add_cat'].clicked.connect(self.hook_up_add_cat)
+        self.dict_widgets['rem_cat'].clicked.connect(self.hook_up_del_cat)
+        self.dict_widgets['name_cat'].clicked.connect(self.hook_up_mod_cat)
 
 
-        self.font_typewriter = fontghost.fontghost.typewriter(15)
-   
-        for i in range(self.layout().count()):
-            temp_row = self.layout().itemAt(i)
-            temp_row.widget().setFont(self.font_typewriter)
+        default_width = self.sizeHint().width()
+        self.setFixedWidth(default_width)
 
 
 
 
     @pyqtSlot()
     def hook_up_visible_pass(self):
-        if dict_prefs['--ghostconfig/pass_visible'] == 'yes':
-            dict_prefs['--ghostconfig/pass_visible'] = 'no'
-        elif dict_prefs['--ghostconfig/pass_visible'] == 'no':
-            dict_prefs['--ghostconfig/pass_visible'] = 'yes'
-        self.wgt_pass_visible.setText(dict_prefs['--ghostconfig/pass_visible'])
+        if global_dict_prefs['--ghostconfig/pass_visible'] == 'yes':
+            global_dict_prefs['--ghostconfig/pass_visible'] = 'no'
+        elif global_dict_prefs['--ghostconfig/pass_visible'] == 'no':
+            global_dict_prefs['--ghostconfig/pass_visible'] = 'yes'
+        self.dict_widgets['pass_visible'].setText(global_dict_prefs['--ghostconfig/pass_visible'])
         
     @pyqtSlot()
     def hook_up_second_pass(self):
-        if dict_prefs['--ghostconfig/second_required'] == 'yes':
-            dict_prefs['--ghostconfig/second_required'] = 'no'
-        elif dict_prefs['--ghostconfig/second_required'] == 'no':
-            dict_prefs['--ghostconfig/second_required'] = 'yes'
-        self.wgt_second_required.setText(dict_prefs['--ghostconfig/second_required'])
+        if global_dict_prefs['--ghostconfig/second_required'] == 'yes':
+            global_dict_prefs['--ghostconfig/second_required'] = 'no'
+        elif global_dict_prefs['--ghostconfig/second_required'] == 'no':
+            global_dict_prefs['--ghostconfig/second_required'] = 'yes'
+        self.dict_widgets['second_required'].setText(global_dict_prefs['--ghostconfig/second_required'])
 
     @pyqtSlot()
     def hook_up_autoblank(self):
-        if dict_prefs['--ghostconfig/autoblank'] == 'yes':
-            dict_prefs['--ghostconfig/autoblank'] = 'no'
-        elif dict_prefs['--ghostconfig/autoblank'] == 'no':
-            dict_prefs['--ghostconfig/autoblank'] = 'yes'
-        self.wgt_autoblank.setText(dict_prefs['--ghostconfig/autoblank'])
+        if global_dict_prefs['--ghostconfig/autoblank'] == 'yes':
+            global_dict_prefs['--ghostconfig/autoblank'] = 'no'
+        elif global_dict_prefs['--ghostconfig/autoblank'] == 'no':
+            global_dict_prefs['--ghostconfig/autoblank'] = 'yes'
+        self.dict_widgets['autoblank'].setText(global_dict_prefs['--ghostconfig/autoblank'])
 
     @pyqtSlot()
     def hook_up_hash_or_word(self):
-        dict_prefs['--ghostconfig/default_type'] = self.wgt_hashword_toggle.currentText()
+        global_dict_prefs['--ghostconfig/default_type'] = self.dict_widgets['stack_type'].currentText()
 
     @pyqtSlot()
     def hook_up_hash_length(self):
-        dict_prefs['--ghostconfig/default_len_hash'] = self.wgt_hash_length.value()
+        global_dict_prefs['--ghostconfig/default_len_hash'] = self.dict_widgets['char_length'].value()
     
     @pyqtSlot()
     def hook_up_word_length(self):
-        dict_prefs['--ghostconfig/default_len_word'] = self.wgt_word_length.value()
+        global_dict_prefs['--ghostconfig/default_len_word'] = self.dict_widgets['word_length'].value()
 
     @pyqtSlot()
     def hook_up_logo_size(self):
-        dict_prefs['--ghostconfig/logo_size'] = self.wgt_logo_size.currentText()
+        global_dict_prefs['--ghostconfig/logo_size'] = self.dict_widgets['logo_size'].currentText()
 
     @pyqtSlot()
     def hook_up_add_cat(self):
@@ -308,12 +349,12 @@ class cls_obj_memory(qtc.QObject):
 
         var_existing_keys = self.settings.allKeys()
 
-        for key in dict_prefs.keys():
+        for key in global_dict_prefs.keys():
             existing = self.settings.value(key)
             if key in var_existing_keys and existing != '': 
-                dict_prefs[key] = self.settings.value(key)
+                global_dict_prefs[key] = self.settings.value(key)
             else:
-                self.settings.setValue(key, dict_prefs[key])
+                self.settings.setValue(key, global_dict_prefs[key])
 
     def func_settings_init(self):
             # This is seperated from the above as it is used to initialize our settings after the main window
@@ -353,7 +394,7 @@ class cls_obj_memory(qtc.QObject):
         
         self.settings.clear()
 
-        for key, value in dict_prefs.items():
+        for key, value in global_dict_prefs.items():
             self.settings.setValue(key, value)
             
         for tab in dict_tabs.keys():
@@ -409,7 +450,7 @@ class cls_obj_memory(qtc.QObject):
             for key, value in settings_dict.items():
                 self.settings.setValue(key, value)
                 if key[:14] == "--ghostconfig/":
-                    dict_prefs[key] = value # This makes sure our running app is in sync
+                    global_dict_prefs[key] = value # This makes sure our running app is in sync
             
             self.sig_reset.emit()
             self.func_settings_init()

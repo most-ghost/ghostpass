@@ -62,7 +62,7 @@ class cls_stack_widget(qtw.QFrame):
             qtw.QSizePolicy.Minimum)
         self.wgt_domain_name.editingFinished.connect(self.slot_domain_format)
         # I don't want to give the option to mix and match upper and lower, so lower only.
-        self.wgt_domain_name.setFont(font_typewriter)
+        self.wgt_domain_name.setFont(font_roboto)
         lo_horizontal.addWidget(self.wgt_domain_name)
 
         struct_spacer = qtw.QSpacerItem(40, 20, 
@@ -87,13 +87,19 @@ class cls_stack_widget(qtw.QFrame):
         lo_toggle_type.addWidget(self.wgt_toggle_type_label) 
         lo_horizontal.addWidget(struct_toggle_type)
 
+        # self.wgt_cycle_spin = qtw.QSpinBox()
+        # self.wgt_cycle_spin.wheelEvent = lambda _: None 
+        # # Who uses the mouse wheel to scroll these? What a dumb feature. You're trying to scroll through
+        # # your list of stuff and your mouse touches one of these boxes and instantly you stop in place
+        # # and instead start messing around with some value you weren't trying to touch. Even if the item
+        # # stays in place I would never use the mouse wheel to adjust a value in a spinbox. It's just an
+        # # odd design concept.
+        # self.wgt_cycle_spin.setStyleSheet("QSpinBox { text-align: right; }")
+        # self.wgt_cycle_spin.setFont(font_typewriter)
+        # lo_horizontal.addWidget(self.wgt_cycle_spin)
+
         self.wgt_size_spinbox = qtw.QSpinBox()
         self.wgt_size_spinbox.wheelEvent = lambda _: None 
-        # Who uses the mouse wheel to scroll these? What a dumb feature. You're trying to scroll through
-        # your list of stuff and your mouse touches one of these boxes and instantly you stop in place
-        # and instead start messing around with some value you weren't trying to touch. Even if the item
-        # stays in place I would never use the mouse wheel to adjust a value in a spinbox. It's just an
-        # odd design concept.
         self.wgt_size_spinbox.setFont(font_typewriter)
         lo_horizontal.addWidget(self.wgt_size_spinbox)
 
@@ -200,6 +206,9 @@ class cls_stack_widget(qtw.QFrame):
             qtc.QTimer.singleShot(60000, lambda: self.wgt_generated.setText(""))
                 # 60000 milliseconds = 1 minute
 
+    @pyqtSlot()
+    def slot_cycle(self):
+        pass
     
 
     @pyqtSlot()
@@ -311,6 +320,8 @@ class cls_stack_widget(qtw.QFrame):
 
         self.wgt_toggle_type_switch.setCheckState(var_toggle)
         self.func_phrase_clicked()
+        self.wgt_domain_name.setCursorPosition(0)
+
 
 
     def func_just_slap_the_tv(self):
@@ -320,6 +331,17 @@ class cls_stack_widget(qtw.QFrame):
         self.wgt_size_spinbox.setFixedWidth(
                 self.wgt_size_spinbox.sizeHint().width() + 12)
         self.func_change_max_type()
+
+
+        # self.wgt_cycle_spin.setPrefix('cycle ')
+        # self.wgt_cycle_spin.setMaximum(999)
+        # self.wgt_cycle_spin.setValue(999)
+        # self.wgt_cycle_spin.setFixedWidth(
+        #         self.wgt_cycle_spin.sizeHint().width() + 12)
+        # self.wgt_cycle_spin.setValue(1)
+
+
+
         # I want the spinbox to be set to a fixed size which represents the largest amount of characters
         # the spinbox might hold. This is a sloppy method but since I don't know exactly what the size hint
         # will be on the user's screen in advance, this is one way to get it done.
