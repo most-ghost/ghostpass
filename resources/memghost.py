@@ -391,7 +391,6 @@ class cls_obj_memory(qtc.QObject):
                 self.sig_make_stack.emit(name, tab)
 
     def func_settings_update(self, dict_tabs):
-        
         self.settings.clear()
 
         for key, value in global_dict_prefs.items():
@@ -411,6 +410,9 @@ class cls_obj_memory(qtc.QObject):
         # This was probably a bad idea though. Each stack should have simply saved everything to settings immediately
         # and been much simpler in design overall while its logic was managed elsewhere.
         # Doing things this way made it more difficult when trying to implement threading.
+
+    def func_tab_order_update(self):
+        global_dict_prefs['--ghostconfig/tab_order'] = self.settings.value('--ghostconfig/tab_order')
 
     def func_export_settings(self):
 

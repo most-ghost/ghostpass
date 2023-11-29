@@ -199,7 +199,6 @@ class cls_main_window(qtw.QMainWindow):
     def slot_generate_all(self):
 
         list_tabs = [self.struct_tab_widget.tabText(i) for i in range(self.struct_tab_widget.count())]
-        print(list_tabs)
 
         for tab in list_tabs:
 
@@ -297,18 +296,17 @@ class cls_main_window(qtw.QMainWindow):
 
     def func_update_tab_order(self):
         self.settings.setValue('--ghostconfig/tab_order', 
-                               '|'.join(
-            [self.struct_tab_widget.tabText(i) for i in range( self.struct_tab_widget.count() ) ]
-                              ))
-        
+                               '|'.join(self.dict_tabs.keys()))
+        self.ref_memory.func_tab_order_update()
+
 
     def hook_up_add_tab(self, tab_name):
-        self.func_update_tab_order()
         self.ref_memory.func_settings_update(self.dict_tabs)
         
         old_tabs = self.settings.value('--ghostconfig/tab_order')
         new_tabs = old_tabs + '|' + tab_name
         self.settings.setValue('--ghostconfig/tab_order', new_tabs)
+        self.settings.setValue(f'--ghost_tabs/{tab_name}', '')
 
         self.struct_tab_widget.clear()
         self.dict_tabs = {}
